@@ -3,724 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Ôn Tập Địa Lí 12 (Đồng Đội)</title>
-    <!-- Tải Tailwind CSS để tạo giao diện đẹp và responsive -->
+    <title>Ôn Tập Địa Lí 12 (Cánh Diều)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tải Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, collection, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // Cấu hình Firebase (Lấy từ biến toàn cục)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        if (Object.keys(firebaseConfig).length > 0) {
-            window.app = initializeApp(firebaseConfig);
-            window.db = getFirestore(window.app);
-            window.auth = getAuth(window.app);
-            setLogLevel('debug'); // Bật log cho Firebase
-            
-            // Hàm đăng nhập
-            async function initializeAuth() {
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(window.auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(window.auth);
-                    }
-                } catch (error) {
-                    console.error("Firebase Auth Error:", error);
-                    // Dù lỗi vẫn cố gắng tiếp tục để lấy UID nếu có thể
-                }
-
-                onAuthStateChanged(window.auth, (user) => {
-                    window.userId = user ? user.uid : crypto.randomUUID();
-                    console.log("User initialized. UID:", window.userId);
-                    // Bắt đầu game sau khi có UID
-                    if (window.onAuthReady) window.onAuthReady();
-                });
-            }
-            initializeAuth();
-        } else {
-            console.error("Firebase configuration not found. Game will run in simulated mode.");
-            window.userId = crypto.randomUUID();
-            window.db = null;
-            if (window.onAuthReady) window.onAuthReady();
-        }
-    </script>
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0fdf4; /* Light Emerald */
+            background-color: #0d1117; /* Dark background */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
         }
-        .container {
+        .quiz-container {
             max-width: 800px;
-            width: 100%;
-            background: linear-gradient(135deg, #ecfccb 0%, #d9f99d 100%); /* Light Green Gradient */
+            width: 95%;
+            background-color: #161b22;
+            padding: 2.5rem;
             border-radius: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            padding: 30px;
-            border: 4px solid #4ade80; /* Emerald 400 */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease-in-out;
         }
         .option-button {
-            transition: all 0.3s ease;
-            transform: scale(1);
-            position: relative;
-            overflow: hidden;
-            text-align: left;
-            padding-left: 20px;
-        }
-        .option-button:hover:not(.disabled):not(.correct):not(.incorrect) {
-            background-color: #6ee7b7; /* Emerald 300 */
-            transform: scale(1.02);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .option-button.correct {
-            background-color: #10b981; /* Green 500 */
-            color: white;
-            animation: pulse-correct 0.5s 3;
-        }
-        .option-button.incorrect {
-            background-color: #ef4444; /* Red 500 */
-            color: white;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% {transform: translateX(0) scale(1);}
-            20%, 60% {transform: translateX(-5px) scale(1);}
-            40%, 80% {transform: translateX(5px) scale(1);}
-        }
-        @keyframes pulse-correct {
-            0% {box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);}
-            70% {box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);}
-            100% {box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);}
-        }
-        .disabled {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-        
-        #bonus-game {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .star {
-            position: absolute;
-            font-size: 3rem;
+            transition: all 0.2s;
             cursor: pointer;
             user-select: none;
-            color: gold;
-            animation: fall linear forwards;
-            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+            border: 2px solid #30363d;
         }
-        @keyframes fall {
-            0% { transform: translateY(-100px) scale(1); opacity: 1; }
-            100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+        .option-button:hover:not(.disabled):not(.correct):not(.incorrect) {
+            background-color: #232831;
+            border-color: #58a6ff;
+            transform: translateY(-2px);
         }
-        .team-score-box {
-            border: 2px solid;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .option-button.correct {
+            background-color: #234c24; /* Green dark */
+            border-color: #3fb950;
+            animation: pulse-correct 0.6s 1;
         }
-        .team-xanh { border-color: #3b82f6; background-color: #eff6ff; color: #1e40af; }
-        .team-vang { border-color: #f59e0b; background-color: #fffbeb; color: #b45309; }
-        .team-label { font-size: 0.75rem; font-weight: 600; }
-        .team-score { font-size: 1.5rem; font-weight: 800; }
+        .option-button.incorrect {
+            background-color: #4b1a1c; /* Red dark */
+            border-color: #f85149;
+            animation: shake 0.3s 2;
+        }
+        .option-button.disabled {
+            pointer-events: none;
+        }
+        @keyframes pulse-correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
     </style>
 </head>
-<body>
+<body class="selection:bg-indigo-700 selection:text-white">
 
-<div class="container">
-    <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-6">
-        <span class="text-green-600">Địa Lí 12</span> - Game Đồng Đội
-    </h1>
-    
-    <!-- Màn hình chọn đội -->
-    <div id="team-screen" class="text-center p-8 space-y-6">
-        <h2 class="text-2xl font-bold text-gray-700">Chọn Đội Của Bạn</h2>
-
-        <!-- THÔNG TIN PHÒNG HIỆN TẠI -->
-        <div class="space-y-2 p-4 bg-green-50/70 rounded-xl border border-green-200">
-            <h3 class="font-bold text-green-700">Phòng hiện tại:</h3>
-            <p class="text-sm text-gray-600">
-                ID Phòng: <span id="room-id" class="font-mono text-sm break-all font-bold text-green-800">Đang tải...</span> 
-                <span onclick="copyRoomLink()" class="cursor-pointer text-blue-500 hover:text-blue-700 ml-1 font-semibold">
-                    [Sao chép Link]
-                </span>
-            </p>
-            <p id="copy-feedback" class="text-xs text-green-500 font-semibold mt-1 opacity-0 transition duration-300"></p>
-        </div>
-        
-        <!-- Ô TẠO PHÒNG MỚI -->
-        <button onclick="createAndRedirectToNewRoom()" class="w-full py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 transition duration-200 transform hover:scale-105">
-            Tạo Phòng Mới Ngẫu Nhiên
-        </button>
-
-        <div class="text-lg font-bold text-gray-500">--- HOẶC ---</div>
-
-        <!-- Ô NHẬP ID PHÒNG ĐỂ VÀO -->
-        <div id="join-room-section" class="flex flex-col gap-2">
-            <input type="text" id="join-room-input" placeholder="Nhập ID phòng của bạn bè (ví dụ: room-abc123)"
-                   class="w-full p-3 border-2 border-green-500 rounded-lg focus:border-green-600 focus:ring-1 focus:ring-green-600">
-            <button onclick="joinRoomById()" class="w-full py-3 px-6 bg-blue-500 text-white font-bold rounded-xl shadow-md hover:bg-blue-600 transition duration-200">
-                Vào Phòng
-            </button>
-            <p id="join-feedback" class="text-sm text-red-500 font-semibold mt-1 h-5"></p>
+    <div id="quiz-container" class="quiz-container">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl font-extrabold text-indigo-400">Ôn Tập Địa Lí 12</h1>
+            <div class="text-lg font-semibold text-gray-300">
+                <span id="score" class="text-yellow-400">Điểm: 0</span> / <span id="total-questions">10</span>
+            </div>
         </div>
 
-        <div class="text-lg font-bold text-gray-500">--- VÀ CHỌN ĐỘI ---</div>
-        
-        <div class="flex flex-col md:flex-row gap-4 justify-center">
-            <button onclick="joinTeam('teamA')" class="py-4 px-6 team-xanh shadow-lg hover:shadow-xl transition duration-200 w-full md:w-1/2">
-                <span class="text-xl">🔵 Đội Xanh</span>
-                <p class="text-sm font-normal mt-1">Hợp lực cùng đồng đội</p>
-            </button>
-            <button onclick="joinTeam('teamB')" class="py-4 px-6 team-vang shadow-lg hover:shadow-xl transition duration-200 w-full md:w-1/2">
-                <span class="text-xl">🟡 Đội Vàng</span>
-                <p class="text-sm font-normal mt-1">Cùng nhau chinh phục kiến thức</p>
-            </button>
-        </div>
-        <button id="start-button" onclick="startGameInCurrentRoom()" class="mt-8 py-3 px-6 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 transform hover:scale-105 hidden">
-            Admin: Bắt Đầu Lại Game/Xáo Trộn Câu Hỏi (Phòng Hiện Tại)
-        </button>
-    </div>
-
-    <!-- Màn hình Quiz -->
-    <div id="quiz-screen" class="space-y-6 hidden">
-        <!-- Khu vực Leaderboard và thông tin -->
-        <div class="flex justify-between items-center p-3 bg-white/70 rounded-xl shadow-inner border border-green-300">
-            <span class="text-lg font-semibold text-gray-700">Câu: <span id="question-index">1</span>/<span id="total-questions"></span></span>
+        <!-- Question Section -->
+        <div id="quiz-section">
             
-            <div id="leaderboard" class="flex gap-4">
-                <div id="score-teamA" class="team-score-box team-xanh">
-                    <span class="team-label mr-2">XANH:</span>
-                    <span class="team-score">0</span>
+            <!-- Thanh Tiến Trình (Progress Bar) -->
+            <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+
+            <div class="mb-8 p-4 bg-gray-800 rounded-lg shadow-inner">
+                <p id="question-text" class="text-xl font-medium text-gray-100 leading-relaxed min-h-[60px]">Đang tải câu hỏi...</p>
+                <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
+                    <span id="question-index">Câu: 1/10</span>
+                    <span id="lesson-info">Bài: ...</span>
                 </div>
-                <div id="score-teamB" class="team-score-box team-vang">
-                    <span class="team-label mr-2">VÀNG:</span>
-                    <span class="team-score">0</span>
+            </div>
+
+            <!-- Options -->
+            <div id="options-container" class="space-y-4">
+                <!-- Buttons will be dynamically inserted here -->
+            </div>
+
+            <!-- Feedback and Next Button -->
+            <div id="feedback-section" class="mt-8">
+                <div id="feedback-message" class="hidden p-4 rounded-lg transition-all duration-300">
+                    <p class="font-bold mb-2 text-lg" id="feedback-title"></p>
+                    <p class="text-sm" id="feedback-explanation"></p>
+                </div>
+                <div class="flex justify-center mt-6">
+                    <button id="next-button" class="hidden px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-500 transition-all duration-300 disabled:opacity-50" disabled>
+                        Tiếp theo
+                    </button>
+                    <button id="restart-button" class="hidden px-8 py-3 bg-yellow-600 text-white font-bold rounded-xl shadow-lg hover:bg-yellow-500 transition-all duration-300">
+                        Chơi Lại (Bộ câu hỏi mới)
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Khu vực câu hỏi -->
-        <div class="bg-white p-6 rounded-xl shadow-lg border border-green-400">
-            <p id="question-text" class="text-xl font-bold text-gray-900 mb-4 text-center"></p>
-            <div id="options-container" class="space-y-3">
-                <!-- Các nút đáp án sẽ được chèn vào đây bằng JS -->
-            </div>
-            <div id="answered-by-team" class="text-center mt-3 text-sm font-medium text-gray-500 hidden">
-                Đội <span id="answering-team-name" class="font-bold"></span> đã trả lời câu này!
-            </div>
+        <!-- Results Section (Initially hidden) -->
+        <div id="results-section" class="hidden text-center p-8 bg-gray-800 rounded-lg">
+            <h2 class="text-4xl font-extrabold text-yellow-400 mb-4">Hoàn thành!</h2>
+            <p class="text-xl text-gray-200 mb-6">Bạn đã hoàn thành lượt chơi với kết quả:</p>
+            <p id="final-score" class="text-6xl font-black text-indigo-400 mb-8"></p>
+            <button onclick="restartGame()" class="px-10 py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl hover:bg-indigo-500 transition-all duration-300">
+                Chơi Lại Ngay!
+            </button>
         </div>
-        
-        <!-- Khu vực phản hồi -->
-        <div id="feedback-message" class="text-center text-xl font-bold h-8"></div>
-        
-        <!-- Nút tiếp tục (Chỉ admin hoặc sau khi câu hỏi được giải) -->
-        <button id="next-button" 
-                class="w-full py-3 px-4 bg-yellow-500 text-white font-bold rounded-xl shadow-md hover:bg-yellow-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled
-                onclick="nextQuestion()">
-            Tiếp tục Câu hỏi
-        </button>
     </div>
 
-    <!-- Màn hình kết thúc -->
-    <div id="end-screen" class="hidden text-center p-8 space-y-6">
-        <h2 class="text-3xl font-extrabold text-green-700">🏆 KẾT THÚC TRẬN ĐẤU 🏆</h2>
-        <p class="text-2xl text-gray-800">
-            Đội <span id="winning-team" class="text-4xl font-bold text-red-600"></span> đã giành chiến thắng!
-        </p>
-        <p id="result-message" class="text-lg text-gray-600"></p>
-        <button onclick="createAndRedirectToNewRoom()" class="py-3 px-6 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 transform hover:scale-105">
-            Tạo Phòng Mới
-        </button>
-    </div>
-</div>
+    <script>
+        // Dữ liệu câu hỏi chi tiết về Địa lí 12 (Bài 1 - Bài 6)
+        // Đã bổ sung thêm câu hỏi để tăng tính ngẫu nhiên và không trùng lặp
+        const allQuestions = [
+            // Bài 1: Vị trí địa lí và phạm vi lãnh thổ (6 câu)
+            {
+                lesson: 1,
+                question: "Vị trí địa lí và phạm vi lãnh thổ nước ta quy định đặc điểm cơ bản nào của thiên nhiên Việt Nam?",
+                options: ["Nằm hoàn toàn trong vùng nhiệt đới.","Nằm hoàn toàn trong vùng ôn đới.","Nằm hoàn toàn trong vùng cận nhiệt.","Nằm hoàn toàn trong vùng xích đạo."],
+                answer: "Nằm hoàn toàn trong vùng nhiệt đới.",
+                explanation: "Việt Nam nằm trong đới nội chí tuyến bán cầu Bắc (từ khoảng 8°34'B đến 23°23'B), do đó thiên nhiên mang tính chất nhiệt đới gió mùa."
+            },
+            {
+                lesson: 1,
+                question: "Điểm cực Bắc phần đất liền nước ta thuộc tỉnh nào?",
+                options: ["Lạng Sơn.","Cao Bằng.","Hà Giang.","Điện Biên."],
+                answer: "Hà Giang.",
+                explanation: "Điểm cực Bắc (23°23'B) nằm ở xã Lũng Cú, huyện Đồng Văn, tỉnh Hà Giang."
+            },
+            {
+                lesson: 1,
+                question: "Phần đất liền nước ta kéo dài theo vĩ độ khoảng bao nhiêu?",
+                options: ["Khoảng 7 vĩ độ.","Khoảng 10 vĩ độ.","Khoảng 15 vĩ độ.","Khoảng 20 vĩ độ."],
+                answer: "Khoảng 15 vĩ độ.",
+                explanation: "Từ cực Bắc (23°23'B) đến cực Nam (8°34'B) là khoảng 14°49', gần 15 vĩ độ."
+            },
+            {
+                lesson: 1,
+                question: "Phạm vi lãnh hải của Việt Nam được quy định bởi chiều rộng bao nhiêu hải lí tính từ đường cơ sở?",
+                options: ["12 hải lí.","24 hải lí.","200 hải lí.","15 hải lí."],
+                answer: "12 hải lí.",
+                explanation: "Lãnh hải có chiều rộng 12 hải lí, là vùng biển thuộc chủ quyền quốc gia."
+            },
+            {
+                lesson: 1,
+                question: "Điểm cực Tây phần đất liền nước ta thuộc tỉnh nào?",
+                options: ["Lai Châu.","Lào Cai.","Điện Biên.","Sơn La."],
+                answer: "Điện Biên.",
+                explanation: "Điểm cực Tây (102°10'Đ) nằm ở xã Sín Thầu, huyện Mường Nhé, tỉnh Điện Biên."
+            },
+            {
+                lesson: 1,
+                question: "Việt Nam có bao nhiêu tỉnh thành giáp biển?",
+                options: ["28.","32.","35.","40."],
+                answer: "28.",
+                explanation: "Việt Nam có 28 tỉnh và thành phố trực thuộc Trung ương giáp biển Đông."
+            },
 
-<!-- MINI GAME (Trò Chơi Phụ) -->
-<div id="bonus-game">
-    <div class="text-center p-8 bg-yellow-100 rounded-xl shadow-2xl border-4 border-yellow-400 transform scale-110">
-        <h3 class="text-3xl font-bold text-yellow-700 mb-4">⭐ THƯỞNG ĐIỂM BÍ MẬT! ⭐</h3>
-        <p class="text-lg text-gray-700">Nhanh tay bấm vào 💰 để nhận thêm điểm thưởng cho đội!</p>
-    </div>
-</div>
+            // Bài 2: Đặc điểm tự nhiên (11 câu)
+            {
+                lesson: 2,
+                question: "Sự phân hóa đa dạng của khí hậu Việt Nam không bị chi phối bởi yếu tố nào sau đây?",
+                options: ["Vị trí địa lí.","Hoạt động của gió mùa.","Địa hình (độ cao, hướng núi).","Hoạt động của núi lửa."],
+                answer: "Hoạt động của núi lửa.",
+                explanation: "Khí hậu Việt Nam chủ yếu chịu tác động của vị trí, gió mùa và địa hình. Việt Nam không có hoạt động núi lửa đáng kể."
+            },
+            {
+                lesson: 2,
+                question: "Dạng địa hình nào chiếm phần lớn diện tích lãnh thổ Việt Nam?",
+                options: ["Đồng bằng.","Đồi núi thấp.","Núi cao.","Cao nguyên bazan."],
+                answer: "Đồi núi thấp.",
+                explanation: "Địa hình đồi núi chiếm 3/4 diện tích lãnh thổ, trong đó đồi núi thấp (dưới 1000m) chiếm phần lớn."
+            },
+            {
+                lesson: 2,
+                question: "Hướng chủ yếu của các dãy núi lớn ở nước ta là:",
+                options: ["Đông – Tây và vòng cung.","Tây Bắc – Đông Nam và vòng cung.","Bắc – Nam và Đông – Tây.","Tây – Đông và Bắc – Nam."],
+                answer: "Tây Bắc – Đông Nam và vòng cung.",
+                explanation: "Hai hướng núi chính là Tây Bắc – Đông Nam (như Hoàng Liên Sơn) và hướng vòng cung (như Đông Triều, Trường Sơn)."
+            },
+            {
+                lesson: 2,
+                question: "Sông ngòi nước ta có đặc điểm nào sau đây?",
+                options: ["Chủ yếu là sông lớn, dốc và nhiều nước.","Mạng lưới sông ngòi dày đặc, phần lớn là sông nhỏ và ngắn.","Hàm lượng phù sa thấp, nước trong.","Chế độ nước điều hòa quanh năm."],
+                answer: "Mạng lưới sông ngòi dày đặc, phần lớn là sông nhỏ và ngắn.",
+                explanation: "Do địa hình hẹp ngang và dốc, Việt Nam có mạng lưới sông ngòi dày đặc, nhưng phần lớn là sông nhỏ và ngắn."
+            },
+            {
+                lesson: 2,
+                question: "Yếu tố nào làm cho thiên nhiên nước ta có sự phân hóa rõ rệt theo chiều cao?",
+                options: ["Sự phân bố các đai đất.","Sự thay đổi nhiệt độ và độ ẩm theo độ cao.","Hoạt động của gió mùa.","Sự phân bố của các vành đai sinh vật."],
+                answer: "Sự thay đổi nhiệt độ và độ ẩm theo độ cao.",
+                explanation: "Nhiệt độ giảm khoảng 0,6°C khi lên cao 100m, tạo nên các đai khí hậu và sinh vật khác nhau."
+            },
+            {
+                lesson: 2,
+                question: "Đặc điểm cơ bản của khí hậu Việt Nam là gì?",
+                options: ["Cận nhiệt ẩm và gió mùa.","Nhiệt đới khô và cận xích đạo.","Nhiệt đới ẩm gió mùa.","Ôn đới hải dương."],
+                answer: "Nhiệt đới ẩm gió mùa.",
+                explanation: "Đây là đặc điểm bao trùm của khí hậu Việt Nam do vị trí địa lí và ảnh hưởng của hoàn lưu gió mùa."
+            },
+            {
+                lesson: 2,
+                question: "Biển Đông ảnh hưởng sâu sắc đến thiên nhiên Việt Nam thông qua yếu tố nào?",
+                options: ["Làm giảm nhiệt độ, giảm độ ẩm.","Làm tăng tính lục địa, giảm mưa.","Làm tăng tính ẩm, điều hòa nhiệt độ.","Làm tăng biên độ nhiệt trong năm."],
+                answer: "Làm tăng tính ẩm, điều hòa nhiệt độ.",
+                explanation: "Biển Đông mang lại lượng hơi ẩm lớn, làm tăng lượng mưa và giảm sự khắc nghiệt của khí hậu."
+            },
+            {
+                lesson: 2,
+                question: "Hồ Ba Bể và hồ Tây được xếp vào loại hình hồ nào?",
+                options: ["Hồ nhân tạo.","Hồ băng hà.","Hồ kiến tạo và hồ móng ngựa.","Hồ núi lửa."],
+                answer: "Hồ kiến tạo và hồ móng ngựa.",
+                explanation: "Hồ Ba Bể là hồ kiến tạo (tectonic), hồ Tây (Hà Nội) là một phần của khúc sông cũ tạo thành hồ móng ngựa."
+            },
 
-<script type="module">
-    import { doc, setDoc, onSnapshot, updateDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    
-    // --- KHỞI TẠO ID PHÒNG ĐỘNG TỪ URL ---
-    const DEFAULT_ROOM_ID = 'default_room_geo_quiz';
-    function getSessionIdFromUrl() {
-        const urlParams = new URLSearchParams(window.location.search);
-        // Ưu tiên lấy từ URL, nếu không có, dùng ID mặc định.
-        return urlParams.get('room') || DEFAULT_ROOM_ID;
-    }
-    const SESSION_ID = getSessionIdFromUrl(); 
-    // ------------------------------------
 
-    let myTeamId = null; // teamA hoặc teamB
-    let bonusGameActive = false;
-    let bonusStarCount = 0;
-    
-    // Cấu hình các câu hỏi (Cố định trong code)
-    const questions = [
-        { topic: "Bài 6: Biển Đông và hải đảo", question: "Hai quần đảo lớn thuộc chủ quyền Việt Nam trên Biển Đông là?", options: ["Quần đảo Cát Bà và Côn Đảo", "Quần đảo Trường Sa và Côn Đảo", "Quần đảo Hoàng Sa và Trường Sa", "Quần đảo Lý Sơn và Thổ Chu"], answer: "Quần đảo Hoàng Sa và Trường Sa" },
-        { topic: "Bài 4: Nước trên lãnh thổ Việt Nam", question: "Mạng lưới sông ngòi nước ta có đặc điểm nổi bật là?", options: ["Ngắn, dốc, lưu lượng nước ổn định", "Dài, ít phù sa, lưu lượng nước theo mùa", "Ngắn, dốc, nhiều nước và giàu phù sa", "Ít sông, chủ yếu là sông lớn"], answer: "Ngắn, dốc, nhiều nước và giàu phù sa" },
-        { topic: "Bài 1: Vị trí địa lí và phạm vi lãnh thổ", question: "Điểm cực Bắc phần đất liền nước ta nằm ở vĩ độ nào?", options: ["23°23' Bắc", "8°34' Bắc", "102°10' Đông", "109°24' Đông"], answer: "23°23' Bắc" },
-        { topic: "Bài 3: Khí hậu Việt Nam", question: "Gió mùa Đông Bắc hoạt động mạnh mẽ nhất vào thời gian nào và gây ra thời tiết gì ở miền Bắc?", options: ["Hạ, khô nóng", "Xuân, mưa phùn", "Đông, rét đậm, rét hại", "Thu, mát mẻ"], answer: "Đông, rét đậm, rét hại" },
-        { topic: "Bài 2: Địa hình Việt Nam", question: "Hướng núi chính của địa hình nước ta là gì?", options: ["Vòng cung và Đông - Tây", "Bắc - Nam và Tây Bắc - Đông Nam", "Vòng cung và Tây Bắc - Đông Nam", "Đông - Tây và Bắc - Nam"], answer: "Tây Bắc - Đông Nam và Vòng cung" },
-        { topic: "Bài 3: Khí hậu Việt Nam", question: "Đặc điểm cơ bản của khí hậu Việt Nam là gì?", options: ["Ôn đới gió mùa", "Cận nhiệt đới gió mùa", "Nhiệt đới ẩm gió mùa", "Khí hậu lục địa"], answer: "Nhiệt đới ẩm gió mùa" },
-        { topic: "Bài 5: Thổ nhưỡng và sinh vật", question: "Loại đất chiếm tỉ lệ lớn nhất trong tổng diện tích đất tự nhiên của nước ta là?", options: ["Đất phù sa", "Đất xám", "Đất feralit", "Đất mùn trên núi cao"], answer: "Đất feralit" },
-        { topic: "Bài 2: Địa hình Việt Nam", question: "Địa hình đồi núi chiếm bao nhiêu phần trăm diện tích lãnh thổ nước ta?", options: ["Dưới 50%", "Khoảng 65%", "Khoảng 85%", "Trên 90%"], answer: "Khoảng 85%" },
-        { topic: "Bài 1: Vị trí địa lí và phạm vi lãnh thổ", question: "Việt Nam có bao nhiêu tỉnh và thành phố trực thuộc Trung ương giáp biển?", options: ["28", "32", "24", "40"], answer: "28" },
-        { topic: "Bài 6: Biển Đông và hải đảo", question: "Nội thủy là vùng biển được tính từ đâu?", options: ["Đường cơ sở", "Đường mép nước biển thấp nhất", "Đường ranh giới ngoài của lãnh hải", "Đường ranh giới ngoài của vùng đặc quyền kinh tế"], answer: "Đường cơ sở" }
-    ];
+            // Bài 3: Khái quát về các vùng kinh tế (7 câu)
+            {
+                lesson: 3,
+                question: "Vùng kinh tế nào sau đây là đầu tàu kinh tế, có tốc độ tăng trưởng cao nhất cả nước?",
+                options: ["Đồng bằng sông Hồng.","Trung du và miền núi Bắc Bộ.","Đông Nam Bộ.","Đồng bằng sông Cửu Long."],
+                answer: "Đông Nam Bộ.",
+                explanation: "Đông Nam Bộ là vùng kinh tế phát triển năng động nhất và thường dẫn đầu cả nước về GDP, công nghiệp và dịch vụ."
+            },
+            {
+                lesson: 3,
+                question: "Vùng nào sau đây có thế mạnh lớn nhất về cây lương thực (đặc biệt là lúa)?",
+                options: ["Đồng bằng sông Hồng.","Bắc Trung Bộ.","Đồng bằng sông Cửu Long.","Tây Nguyên."],
+                answer: "Đồng bằng sông Cửu Long.",
+                explanation: "Đồng bằng sông Cửu Long là vựa lúa lớn nhất cả nước, chiếm hơn 50% sản lượng lúa."
+            },
+            {
+                lesson: 3,
+                question: "Vùng nào có trữ lượng khoáng sản than đá lớn nhất nước ta?",
+                options: ["Trung du và miền núi Bắc Bộ.","Bắc Trung Bộ.","Tây Nguyên.","Đông Nam Bộ."],
+                answer: "Trung du và miền núi Bắc Bộ.",
+                explanation: "Vùng này, đặc biệt là Quảng Ninh, có trữ lượng than đá lớn nhất cả nước."
+            },
+            {
+                lesson: 3,
+                question: "Vùng nào có vai trò quan trọng trong việc đảm bảo an ninh lương thực và sản xuất hàng hóa nông sản lớn nhất cả nước?",
+                options: ["Trung du và miền núi Bắc Bộ.","Đồng bằng sông Hồng.","Tây Nguyên.","Đồng bằng sông Cửu Long."],
+                answer: "Đồng bằng sông Cửu Long.",
+                explanation: "ĐBSCL là vùng sản xuất lúa, cá, tôm lớn nhất, đảm bảo an ninh lương thực và xuất khẩu."
+            },
+            {
+                lesson: 3,
+                question: "Vùng kinh tế nào có cảng biển nước sâu lớn nhất (Cảng Cái Mép – Thị Vải)?",
+                options: ["Đông Nam Bộ.","Duyên hải Nam Trung Bộ.","Đồng bằng sông Hồng.","Bắc Trung Bộ."],
+                answer: "Đông Nam Bộ.",
+                explanation: "Cảng Cái Mép – Thị Vải, cảng nước sâu quan trọng, nằm ở Đông Nam Bộ (Bà Rịa - Vũng Tàu)."
+            },
+            {
+                lesson: 3,
+                question: "Cây công nghiệp lâu năm quan trọng nhất và nổi tiếng của vùng Tây Nguyên là gì?",
+                options: ["Cao su.","Cà phê.","Hồ tiêu.","Điều."],
+                answer: "Cà phê.",
+                explanation: "Cà phê là cây công nghiệp chủ lực, chiếm sản lượng lớn nhất và nổi tiếng nhất của Tây Nguyên."
+            },
+             {
+                lesson: 3,
+                question: "Khu vực kinh tế trọng điểm phía Bắc bao gồm các tỉnh/thành phố nào sau đây?",
+                options: ["Hà Nội, Hải Phòng, Quảng Ninh, Hải Dương, Hưng Yên.","Hà Nội, Hải Phòng, Quảng Ninh, Thái Nguyên, Vĩnh Phúc.","Hà Nội, Hải Phòng, Vĩnh Phúc, Bắc Ninh, Quảng Ninh.","Hà Nội, Hải Phòng, Quảng Ninh, Hưng Yên, Bắc Ninh, Hải Dương, Vĩnh Phúc."],
+                answer: "Hà Nội, Hải Phòng, Quảng Ninh, Hưng Yên, Bắc Ninh, Hải Dương, Vĩnh Phúc.",
+                explanation: "Khu vực kinh tế trọng điểm Bắc Bộ bao gồm 7 tỉnh/thành phố này, đóng vai trò quan trọng trong sự phát triển kinh tế của miền Bắc."
+            },
 
-    // Lấy các phần tử DOM
-    const questionIndexEl = document.getElementById('question-index');
-    const totalQuestionsEl = document.getElementById('total-questions');
-    const questionTextEl = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
-    const feedbackMessageEl = document.getElementById('feedback-message');
-    const nextButton = document.getElementById('next-button');
-    const quizScreen = document.getElementById('quiz-screen');
-    const endScreen = document.getElementById('end-screen');
-    const teamScreen = document.getElementById('team-screen');
-    const scoreTeamAEl = document.querySelector('#score-teamA .team-score');
-    const scoreTeamBEl = document.querySelector('#score-teamB .team-score');
-    const answeredByTeamEl = document.getElementById('answered-by-team');
-    const answeringTeamNameEl = document.getElementById('answering-team-name');
-    const winningTeamEl = document.getElementById('winning-team');
-    const resultMessageEl = document.getElementById('result-message');
-    const bonusGameEl = document.getElementById('bonus-game');
-    const startButton = document.getElementById('start-button');
-    const roomIdEl = document.getElementById('room-id'); 
-    const copyFeedbackEl = document.getElementById('copy-feedback');
-    const joinFeedbackEl = document.getElementById('join-feedback');
-    
-    let currentGameState = null;
+            // Bài 4: Dân số và lao động (7 câu)
+            {
+                lesson: 4,
+                question: "Thách thức lớn nhất đối với vấn đề dân số và việc làm ở Việt Nam hiện nay là gì?",
+                options: ["Thiếu nguồn lao động có trình độ cao.","Mất cân bằng giới tính.","Tỉ lệ thất nghiệp ở khu vực nông thôn cao.","Tỉ lệ gia tăng dân số còn cao."],
+                answer: "Thiếu nguồn lao động có trình độ cao.",
+                explanation: "Mặc dù có nguồn lao động dồi dào, Việt Nam đang đối mặt với thách thức lớn về chất lượng và trình độ chuyên môn của lực lượng lao động để đáp ứng yêu cầu của nền kinh tế hiện đại."
+            },
+            {
+                lesson: 4,
+                question: "Dân số nước ta phân bố không đồng đều chủ yếu do yếu tố nào?",
+                options: ["Sự khác biệt về khí hậu và đất đai.","Trình độ phát triển kinh tế và lịch sử khai thác lãnh thổ.","Tình trạng thiên tai và dịch bệnh.","Sự phân hóa về tài nguyên rừng."],
+                answer: "Trình độ phát triển kinh tế và lịch sử khai thác lãnh thổ.",
+                explanation: "Dân số tập trung ở các vùng đồng bằng, đô thị do có kinh tế phát triển, điều kiện sống và việc làm tốt hơn (lịch sử khai thác lâu đời)."
+            },
+            {
+                lesson: 4,
+                question: "Xu hướng biến động dân số nào sau đây đang diễn ra ở Việt Nam?",
+                options: ["Tỉ suất sinh thô tăng mạnh.","Tỉ lệ dân số thành thị giảm.","Tỉ lệ dân số phụ thuộc tăng nhanh do già hóa.","Tỉ lệ lao động nông nghiệp tăng trở lại."],
+                answer: "Tỉ lệ dân số phụ thuộc tăng nhanh do già hóa.",
+                explanation: "Việt Nam đang bước vào giai đoạn già hóa dân số, khiến tỉ lệ dân số trên 60 tuổi tăng, làm tăng gánh nặng phụ thuộc."
+            },
+            {
+                lesson: 4,
+                question: "Hiện tượng 'già hóa dân số' ở Việt Nam có nghĩa là gì?",
+                options: ["Tỉ lệ người trẻ tuổi tăng nhanh.","Tỉ lệ người trên 60 tuổi tăng nhanh.","Tỉ suất sinh thô tăng.","Tỉ suất tử thô giảm."],
+                answer: "Tỉ lệ người trên 60 tuổi tăng nhanh.",
+                explanation: "Già hóa dân số là quá trình tăng tỉ lệ nhóm dân số già (thường là trên 60 hoặc 65 tuổi) trong tổng cơ cấu dân số."
+            },
+            {
+                lesson: 4,
+                question: "Dân số vàng (cơ cấu dân số vàng) là giai đoạn mà:",
+                options: ["Tỉ lệ trẻ em rất cao.","Tỉ lệ người phụ thuộc (trẻ em và người già) cao hơn người trong độ tuổi lao động.","Tỉ lệ người trong độ tuổi lao động cao hơn tỉ lệ người phụ thuộc.","Tỉ lệ nữ cao hơn tỉ lệ nam."],
+                answer: "Tỉ lệ người trong độ tuổi lao động cao hơn tỉ lệ người phụ thuộc.",
+                explanation: "Cơ cấu dân số vàng là giai đoạn tỉ lệ người trong độ tuổi lao động (15-64 tuổi) chiếm ưu thế (thường trên 66%)."
+            },
+            {
+                lesson: 4,
+                question: "Việc chuyển dịch cơ cấu lao động từ nông nghiệp sang công nghiệp và dịch vụ phản ánh điều gì?",
+                options: ["Sự suy giảm của ngành nông nghiệp.","Quá trình công nghiệp hóa, hiện đại hóa đất nước.","Thiếu đất sản xuất nông nghiệp.","Tăng cường nhập khẩu lương thực."],
+                answer: "Quá trình công nghiệp hóa, hiện đại hóa đất nước.",
+                explanation: "Đây là đặc trưng và mục tiêu của quá trình CNH, HĐH nhằm tăng năng suất và giá trị kinh tế."
+            },
+            {
+                lesson: 4,
+                question: "Vùng nào sau đây có mật độ dân số cao nhất nước ta?",
+                options: ["Tây Nguyên.","Đồng bằng sông Hồng.","Đông Nam Bộ.","Trung du và miền núi Bắc Bộ."],
+                answer: "Đồng bằng sông Hồng.",
+                explanation: "Đồng bằng sông Hồng là vùng có điều kiện tự nhiên, kinh tế-xã hội thuận lợi và lịch sử khai thác lâu đời, dẫn đến mật độ dân số cao nhất cả nước."
+            },
 
-    // --- UTILITY FUNCTION ---
-    
-    /**
-     * Xáo trộn thứ tự các phần tử trong một mảng (thuật toán Fisher-Yates).
-     */
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            // Bài 5: Khái quát về kinh tế (5 câu)
+            {
+                lesson: 5,
+                question: "Ngành kinh tế nào chiếm tỉ trọng lớn nhất trong cơ cấu GDP của Việt Nam hiện nay?",
+                options: ["Nông nghiệp, lâm nghiệp và thủy sản.","Công nghiệp và xây dựng.","Dịch vụ.","Ngư nghiệp."],
+                answer: "Dịch vụ.",
+                explanation: "Trong cơ cấu kinh tế theo ngành hiện nay (tính theo giá hiện hành), nhóm ngành Dịch vụ thường chiếm tỉ trọng cao nhất, theo sau là Công nghiệp và Xây dựng."
+            },
+            {
+                lesson: 5,
+                question: "Việt Nam đẩy mạnh công nghiệp hóa, hiện đại hóa nhằm mục đích chủ yếu nào?",
+                options: ["Phát triển mạnh ngành du lịch.","Chuyển dịch cơ cấu kinh tế theo hướng hiện đại, tăng trưởng nhanh và bền vững.","Tăng cường giao lưu quốc tế.","Đầu tư vào nông nghiệp công nghệ cao."],
+                answer: "Chuyển dịch cơ cấu kinh tế theo hướng hiện đại, tăng trưởng nhanh và bền vững.",
+                explanation: "Mục tiêu cốt lõi của CNH, HĐH là xây dựng nền kinh tế hiện đại, nâng cao năng suất và chất lượng sống."
+            },
+            {
+                lesson: 5,
+                question: "Yếu tố nào đóng vai trò quan trọng nhất trong việc thu hút vốn đầu tư nước ngoài (FDI) vào Việt Nam?",
+                options: ["Vị trí địa lí gần Trung Quốc.","Nguồn tài nguyên thiên nhiên đa dạng.","Môi trường chính trị ổn định và lực lượng lao động dồi dào, giá rẻ.","Hệ thống giao thông phát triển đồng bộ."],
+                answer: "Môi trường chính trị ổn định và lực lượng lao động dồi dồi, giá rẻ.",
+                explanation: "Sự ổn định về chính trị và nguồn lao động là hai yếu tố cốt lõi và hấp dẫn nhất đối với các nhà đầu tư nước ngoài."
+            },
+            {
+                lesson: 5,
+                question: "Khu vực kinh tế nào thu hút vốn FDI nhiều nhất ở Việt Nam hiện nay?",
+                options: ["Nông nghiệp.","Lâm nghiệp.","Công nghiệp và Xây dựng.","Dịch vụ."],
+                answer: "Công nghiệp và Xây dựng.",
+                explanation: "Các dự án sản xuất, chế tạo, lắp ráp (thuộc Công nghiệp) luôn chiếm tỉ trọng lớn nhất trong tổng vốn FDI đăng kí."
+            },
+            {
+                lesson: 5,
+                question: "Nền kinh tế Việt Nam đang chuyển dịch theo xu hướng nào?",
+                options: ["Giảm tỉ trọng Dịch vụ, tăng tỉ trọng Nông nghiệp.","Tăng tỉ trọng Công nghiệp - Xây dựng và Dịch vụ, giảm tỉ trọng Nông nghiệp.","Tăng tỉ trọng Nông nghiệp, giảm tỉ trọng Công nghiệp - Xây dựng.","Tăng tỉ trọng Công nghiệp - Xây dựng, giảm tỉ trọng Dịch vụ."],
+                answer: "Tăng tỉ trọng Công nghiệp - Xây dựng và Dịch vụ, giảm tỉ trọng Nông nghiệp.",
+                explanation: "Đây là xu hướng chung của quá trình công nghiệp hóa, hiện đại hóa ở Việt Nam."
+            },
+
+            // Bài 6: Ngành nông nghiệp, lâm nghiệp, và thủy sản (6 câu)
+            {
+                lesson: 6,
+                question: "Cây trồng chính của ngành nông nghiệp Việt Nam, chiếm diện tích lớn nhất là gì?",
+                options: ["Cao su.","Cà phê.","Lúa.","Hồ tiêu."],
+                answer: "Lúa.",
+                explanation: "Lúa (đặc biệt là lúa nước) vẫn là cây lương thực quan trọng nhất và chiếm diện tích lớn nhất trong sản xuất nông nghiệp của Việt Nam."
+            },
+            {
+                lesson: 6,
+                question: "Hoạt động nuôi trồng thủy sản của Việt Nam phát triển mạnh mẽ nhất ở vùng nào?",
+                options: ["Bắc Trung Bộ.","Duyên hải Nam Trung Bộ.","Đồng bằng sông Hồng.","Đồng bằng sông Cửu Long."],
+                answer: "Đồng bằng sông Cửu Long.",
+                explanation: "Đồng bằng sông Cửu Long là vựa thủy sản lớn nhất cả nước, dẫn đầu về sản lượng nuôi trồng, đặc biệt là tôm, cá tra."
+            },
+            {
+                lesson: 6,
+                question: "Ngành lâm nghiệp Việt Nam đang chuyển dịch theo hướng nào?",
+                options: ["Tăng cường khai thác rừng tự nhiên.","Trồng rừng phòng hộ và rừng đặc dụng là chủ yếu.","Kết hợp khai thác hợp lí với bảo vệ và trồng rừng.","Chỉ tập trung vào xuất khẩu gỗ tròn."],
+                answer: "Kết hợp khai thác hợp lí với bảo vệ và trồng rừng.",
+                explanation: "Định hướng phát triển bền vững là bảo vệ rừng hiện có, trồng rừng mới và khai thác có kiểm soát."
+            },
+            {
+                lesson: 6,
+                question: "Việc áp dụng công nghệ cao trong nông nghiệp ở Việt Nam chủ yếu nhằm mục đích gì?",
+                options: ["Tăng cường sử dụng thuốc bảo vệ thực vật.","Tăng diện tích gieo trồng.","Nâng cao năng suất, chất lượng sản phẩm và giảm thiểu tác động môi trường.","Giảm chi phí lao động thủ công."],
+                answer: "Nâng cao năng suất, chất lượng sản phẩm và giảm thiểu tác động môi trường.",
+                explanation: "Mục tiêu của nông nghiệp công nghệ cao là tăng hiệu quả, chất lượng và đảm bảo tính bền vững."
+            },
+            {
+                lesson: 6,
+                question: "Ngành đánh bắt hải sản (ngư nghiệp) của Việt Nam phát triển nhất ở vùng nào?",
+                options: ["Vịnh Bắc Bộ.","Trung Bộ.","Vùng biển Tây Nam.","Tất cả các vùng biển."],
+                answer: "Tất cả các vùng biển.",
+                explanation: "Việt Nam có hơn 3.260 km bờ biển với nhiều bãi tôm, bãi cá lớn trải dài từ Bắc vào Nam, phát triển mạnh ở cả ba ngư trường trọng điểm."
+            },
+            {
+                lesson: 6,
+                question: "Cây công nghiệp lâu năm nào được trồng chủ yếu trên đất đỏ bazan ở Tây Nguyên?",
+                options: ["Lúa, ngô.","Cao su, cà phê, hồ tiêu.","Mía, lạc.","Bông, đay."],
+                answer: "Cao su, cà phê, hồ tiêu.",
+                explanation: "Đất đỏ bazan có diện tích lớn ở Tây Nguyên rất phù hợp cho việc trồng các cây công nghiệp lâu năm này."
+            },
+        ];
+
+        let questions = []; // Array chứa bộ câu hỏi cho lượt chơi hiện tại
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const QUESTIONS_PER_ROUND = 10; // Số lượng câu hỏi mỗi vòng chơi
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const scoreDisplay = document.getElementById('score');
+        const nextButton = document.getElementById('next-button');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackExplanation = document.getElementById('feedback-explanation');
+        const questionIndexDisplay = document.getElementById('question-index');
+        const lessonInfoDisplay = document.getElementById('lesson-info');
+        const resultsSection = document.getElementById('results-section');
+        const quizSection = document.getElementById('quiz-section');
+        const finalScore = document.getElementById('final-score');
+        const totalQuestionsDisplay = document.getElementById('total-questions');
+        const restartButton = document.getElementById('restart-button');
+        const progressBar = document.getElementById('progress-bar');
+
+        // Hàm xáo trộn mảng (Fisher-Yates Shuffle)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
         }
-    }
 
-    // NEW: Hàm sao chép Link phòng
-    window.copyRoomLink = function() {
-        const fullUrl = window.location.origin + window.location.pathname + `?room=${SESSION_ID}`;
-        navigator.clipboard.writeText(fullUrl).then(() => {
-            copyFeedbackEl.textContent = '✅ Đã sao chép đường link phòng! Gửi cho bạn bè của bạn.';
-            copyFeedbackEl.classList.remove('opacity-0');
-            setTimeout(() => { copyFeedbackEl.classList.add('opacity-0'); }, 3000);
-        }).catch(err => {
-            copyFeedbackEl.textContent = '❌ Lỗi sao chép, vui lòng sao chép URL thủ công.';
-            copyFeedbackEl.classList.remove('opacity-0');
-            setTimeout(() => { copyFeedbackEl.classList.add('opacity-0'); }, 3000);
-        });
-    };
+        // Khởi tạo/Tải câu hỏi cho lượt chơi mới
+        function initializeGame() {
+            // 1. Xáo trộn toàn bộ ngân hàng câu hỏi
+            shuffle(allQuestions);
+            // 2. Chọn ra 10 câu hỏi đầu tiên cho lượt chơi này
+            questions = allQuestions.slice(0, QUESTIONS_PER_ROUND);
 
-    // NEW: Hàm tạo ID ngẫu nhiên và chuyển hướng
-    window.createAndRedirectToNewRoom = function() {
-        // Tạo ID 6 ký tự ngẫu nhiên
-        const newRoomId = 'room-' + Math.random().toString(36).substring(2, 8);
-        // Chuyển hướng người dùng đến URL với ID phòng mới
-        window.location.href = window.location.origin + window.location.pathname + `?room=${newRoomId}`;
-    };
+            currentQuestionIndex = 0;
+            score = 0;
 
-    // NEW: Hàm tham gia phòng bằng ID
-    window.joinRoomById = function() {
-        const inputId = document.getElementById('join-room-input').value.trim();
-        joinFeedbackEl.textContent = '';
+            // Cập nhật UI ban đầu
+            scoreDisplay.textContent = `Điểm: ${score}`;
+            totalQuestionsDisplay.textContent = QUESTIONS_PER_ROUND;
+            quizSection.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            restartButton.classList.add('hidden'); // Ẩn nút Chơi Lại tạm thời
+            
+            // Reset Progress Bar
+            progressBar.style.width = '0%';
 
-        if (inputId.length < 5) {
-            joinFeedbackEl.textContent = "ID phòng phải có ít nhất 5 ký tự.";
-            return;
+            loadQuestion();
         }
 
-        // Chuyển hướng đến phòng tương ứng
-        window.location.href = window.location.origin + window.location.pathname + `?room=${inputId}`;
-    };
+        // Tải câu hỏi hiện tại và hiển thị
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showResults();
+                return;
+            }
 
+            const currentQ = questions[currentQuestionIndex];
 
-    // --- FIREBASE LOGIC ---
+            // Ẩn/reset feedback và nút tiếp theo
+            feedbackMessage.classList.add('hidden');
+            feedbackMessage.className = 'hidden p-4 rounded-lg mt-8 transition-all duration-300';
+            nextButton.classList.add('hidden');
+            nextButton.disabled = true;
 
-    window.onAuthReady = function() {
-        if (!window.db) {
-             // Chạy chế độ mô phỏng nếu không có Firebase
-             roomIdEl.textContent = DEFAULT_ROOM_ID;
-             startButton.classList.remove('hidden'); 
-             console.error("Firebase config not found. Running in simulated mode.");
-             teamScreen.classList.remove('hidden');
-             quizScreen.classList.add('hidden');
-             return;
+            // Cập nhật thông tin câu hỏi
+            questionIndexDisplay.textContent = `Câu: ${currentQuestionIndex + 1}/${questions.length}`;
+            lessonInfoDisplay.textContent = `Bài: ${currentQ.lesson}`;
+            questionText.textContent = currentQ.question;
+
+            // Hiển thị các lựa chọn
+            optionsContainer.innerHTML = '';
+            // Xáo trộn thứ tự các lựa chọn để tăng tính "tự tạo"
+            const shuffledOptions = [...currentQ.options];
+            shuffle(shuffledOptions);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'option-button w-full text-left p-4 bg-gray-700 text-gray-100 rounded-xl font-medium shadow-md transition-all duration-200';
+                button.onclick = () => checkAnswer(button, option, currentQ.answer, currentQ.explanation);
+                optionsContainer.appendChild(button);
+            });
         }
 
-        roomIdEl.textContent = SESSION_ID; 
-        setupFirestoreListeners();
-    }
+        // Kiểm tra câu trả lời
+        function checkAnswer(selectedButton, selectedOption, correctAnswer, explanation) {
+            // Vô hiệu hóa tất cả các nút để ngăn chặn click lại
+            Array.from(optionsContainer.children).forEach(btn => btn.classList.add('disabled'));
 
-    function getGameSessionRef() {
-        if (!window.db || !window.appId) return null;
-        // Đường dẫn: /artifacts/{appId}/public/data/geo_games/{SESSION_ID}
-        return doc(window.db, "artifacts", window.appId, "public", "data", "geo_games", SESSION_ID);
-    }
-    
-    // Lắng nghe thay đổi trạng thái game (Real-time)
-    function setupFirestoreListeners() {
-        const docRef = getGameSessionRef();
-        if (!docRef) return;
+            nextButton.classList.remove('hidden');
+            nextButton.disabled = false; // Kích hoạt nút Tiếp theo
 
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                currentGameState = docSnap.data();
-                updateUI(currentGameState);
+            const isCorrect = selectedOption === correctAnswer;
+
+            if (isCorrect) {
+                score++;
+                scoreDisplay.textContent = `Điểm: ${score}`;
+                selectedButton.classList.add('correct');
+                feedbackTitle.textContent = "Chính xác! 🎉";
+                feedbackExplanation.textContent = "Bạn đã trả lời đúng câu hỏi này.";
+                feedbackMessage.classList.add('bg-green-800/50', 'border', 'border-green-600');
             } else {
-                console.log(`Game session ${SESSION_ID} does not exist. Initializing...`);
-                // Nếu chưa có session, cho phép Admin (người đầu tiên) khởi tạo
-                startButton.classList.remove('hidden');
-                updateUI({ status: 'waiting', currentQuestionIndex: 0, teams: { teamA: { score: 0 }, teamB: { score: 0 } } });
-            }
-        }, (error) => {
-            console.error("Error listening to game state:", error);
-            feedbackMessageEl.textContent = "Lỗi kết nối: " + error.message;
-        });
-    }
+                selectedButton.classList.add('incorrect');
+                feedbackTitle.textContent = "Chưa chính xác! 🙁";
+                feedbackExplanation.innerHTML = `Câu trả lời đúng là: <strong>${correctAnswer}</strong>. <br> Giải thích: ${explanation}`;
 
-    // KHỞI TẠO/ĐẶT LẠI GAME TRONG PHÒNG HIỆN TẠI
-    window.startGameInCurrentRoom = async function() {
-        const docRef = getGameSessionRef();
-        if (!docRef) return;
-        
-        // XÁO TRỘN CÂU HỎI MỚI
-        const shuffledQuestions = [...questions];
-        shuffleArray(shuffledQuestions); 
-
-        try {
-            await setDoc(docRef, {
-                currentQuestionIndex: 0,
-                status: 'in_progress',
-                teams: {
-                    teamA: { score: 0, lastAnswer: null },
-                    teamB: { score: 0, lastAnswer: null }
-                },
-                answeredBy: null, // Mở khóa câu hỏi
-                totalQuestions: questions.length,
-                shuffledQuestions: shuffledQuestions, // LƯU DANH SÁCH CÂU HỎI ĐÃ XÁO TRỘN
-            });
-            console.log(`Game session ${SESSION_ID} reset successfully.`);
-        } catch (e) {
-            console.error("Error resetting game:", e);
-        }
-    }
-
-    // Cập nhật điểm và thông báo đội đã trả lời (Chỉ gọi khi trả lời đúng)
-    async function updateScoreAndNext(teamId, questionIndex, isCorrect) {
-        const docRef = getGameSessionRef();
-        if (!docRef || currentGameState.answeredBy) return; 
-
-        if (isCorrect) {
-            const updatePayload = {
-                answeredBy: teamId, 
-                [`teams.${teamId}.score`]: currentGameState.teams[teamId].score + 1
-            };
-            
-            try {
-                await updateDoc(docRef, updatePayload);
-            } catch (e) {
-                console.error("Error updating score:", e);
-            }
-        }
-    }
-
-    // Chuyển sang câu hỏi tiếp theo
-    window.nextQuestion = async function() {
-        const docRef = getGameSessionRef();
-        if (!docRef || currentGameState.status !== 'in_progress') return;
-
-        const nextIndex = currentGameState.currentQuestionIndex + 1;
-
-        if (nextIndex >= questions.length) {
-             // Kết thúc game
-            await updateDoc(docRef, { status: 'finished' });
-        } else {
-            // Chuyển câu hỏi
-            await updateDoc(docRef, {
-                currentQuestionIndex: nextIndex,
-                answeredBy: null, // Mở khóa câu hỏi mới
-                'teams.teamA.lastAnswer': null, 
-                'teams.teamB.lastAnswer': null 
-            });
-        }
-    }
-
-    // --- GAME UI & LOGIC ---
-
-    // Hàm cập nhật giao diện dựa trên trạng thái Firestore
-    function updateUI(state) {
-        if (!state || !state.status) {
-            teamScreen.classList.remove('hidden');
-            quizScreen.classList.add('hidden');
-            endScreen.classList.add('hidden');
-            return;
-        }
-
-        totalQuestionsEl.textContent = questions.length;
-        scoreTeamAEl.textContent = state.teams.teamA.score;
-        scoreTeamBEl.textContent = state.teams.teamB.score;
-
-        if (state.status === 'waiting') {
-            teamScreen.classList.remove('hidden');
-            quizScreen.classList.add('hidden');
-            endScreen.classList.add('hidden');
-        } else if (state.status === 'in_progress') {
-            teamScreen.classList.add('hidden');
-            quizScreen.classList.remove('hidden');
-            endScreen.classList.add('hidden');
-            
-            // Xử lý câu hỏi
-            if (state.shuffledQuestions && state.currentQuestionIndex < state.shuffledQuestions.length) {
-                loadQuestion(state);
-            } else {
-                 showEndScreen(state);
-            }
-        } else if (state.status === 'finished') {
-            showEndScreen(state);
-        }
-        
-        // Cập nhật nút "Tiếp tục"
-        const isAnswered = state.answeredBy !== null;
-        nextButton.disabled = !isAnswered;
-        
-        // Luôn hiển thị nút Admin để người tạo phòng có thể khởi động game bất cứ lúc nào
-        startButton.classList.remove('hidden'); 
-    }
-    
-    window.joinTeam = function(teamId) {
-        myTeamId = teamId;
-        console.log("Joined team:", myTeamId);
-        // Sau khi join team, ẩn team screen và chờ trạng thái game
-        teamScreen.classList.add('hidden');
-        quizScreen.classList.remove('hidden');
-    }
-
-    function loadQuestion(state) {
-        const index = state.currentQuestionIndex;
-        const q = state.shuffledQuestions[index]; 
-        const answeredTeamId = state.answeredBy;
-
-        questionIndexEl.textContent = index + 1;
-        feedbackMessageEl.innerHTML = '';
-
-        questionTextEl.innerHTML = `<span class="text-sm font-normal text-green-600">(${q.topic})</span><br>${index + 1}. ${q.question}`;
-        optionsContainer.innerHTML = ''; 
-
-        const shuffledOptions = [...q.options];
-
-        // Tạo các nút đáp án
-        shuffledOptions.forEach(option => {
-            const button = document.createElement('button');
-            button.className = 'option-button w-full py-3 rounded-xl border-2 border-green-500 bg-white hover:bg-green-100 font-medium text-gray-800 shadow-md';
-            button.textContent = option;
-            button.onclick = () => checkAnswer(button, option, q.answer, index);
-            optionsContainer.appendChild(button);
-        });
-
-        // Xử lý trạng thái câu hỏi đã được trả lời
-        if (answeredTeamId) {
-            // Vô hiệu hóa tất cả các nút
-            Array.from(optionsContainer.children).forEach(btn => {
-                btn.classList.add('disabled');
-            });
-
-            const correctButton = Array.from(optionsContainer.children).find(btn => btn.textContent === q.answer);
-            if (correctButton) {
-                correctButton.classList.add('correct');
-            }
-            
-            const teamName = answeredTeamId === 'teamA' ? 'Xanh 🔵' : 'Vàng 🟡';
-            answeringTeamNameEl.textContent = teamName;
-            answeredByTeamEl.classList.remove('hidden');
-            feedbackMessageEl.innerHTML = `<span class="text-green-600">✅ Đội ${teamName} đã trả lời đúng!</span>`;
-            
-        } else {
-            // Câu hỏi mới, cho phép trả lời
-            answeredByTeamEl.classList.add('hidden');
-        }
-    }
-
-    // Hàm kiểm tra đáp án (chỉ được gọi nếu answeredBy là null)
-    function checkAnswer(selectedButton, selectedOption, correctAnswer, questionIndex) {
-        if (!myTeamId || currentGameState.answeredBy !== null || currentGameState.currentQuestionIndex !== questionIndex) {
-            return;
-        }
-        
-        // Vô hiệu hóa nút cục bộ để tránh bấm liên tục
-        Array.from(optionsContainer.children).forEach(btn => {
-            btn.classList.add('disabled');
-        });
-
-        const isCorrect = selectedOption === correctAnswer;
-
-        if (isCorrect) {
-            selectedButton.classList.add('correct');
-            feedbackMessageEl.innerHTML = `<span class="text-green-600">🎉 Bạn đã giành quyền trả lời đúng cho Đội ${myTeamId === 'teamA' ? 'Xanh' : 'Vàng'}!</span>`;
-            updateScoreAndNext(myTeamId, questionIndex, true); 
-            showBonusGame(myTeamId); 
-        } else {
-            selectedButton.classList.add('incorrect');
-            feedbackMessageEl.innerHTML = '<span class="text-red-600">❌ Sai rồi! Chờ đồng đội hoặc đối thủ trả lời.</span>';
-            
-            // Tìm và làm nổi bật đáp án đúng sau 1 giây
-            setTimeout(() => {
+                // Tìm và highlight câu trả lời đúng
                 Array.from(optionsContainer.children).forEach(btn => {
                     if (btn.textContent === correctAnswer) {
                         btn.classList.add('correct');
                     }
                 });
-            }, 1000);
-        }
-    }
-    
-    function showEndScreen(state) {
-        quizScreen.classList.add('hidden');
-        endScreen.classList.remove('hidden');
-        
-        const scoreA = state.teams.teamA.score;
-        const scoreB = state.teams.teamB.score;
-        
-        let winningTeamName = '';
-        let message = '';
-
-        if (scoreA > scoreB) {
-            winningTeamName = 'Xanh 🔵';
-            message = 'Đội Xanh đã thể hiện sự hợp tác tuyệt vời và giành chiến thắng chung cuộc!';
-        } else if (scoreB > scoreA) {
-            winningTeamName = 'Vàng 🟡';
-            message = 'Đội Vàng đã chứng tỏ kiến thức vững vàng và giành được vinh quang!';
-        } else {
-            winningTeamName = 'HÒA';
-            message = 'Cả hai đội đều ngang tài ngang sức! Tuyệt vời!';
-        }
-
-        winningTeamEl.textContent = winningTeamName;
-        resultMessageEl.textContent = message;
-    }
-
-    // --- LOGIC CHO MINI GAME ĐỒNG ĐỘI ---
-
-    function showBonusGame(teamId) {
-        if (bonusGameActive) return;
-        bonusGameActive = true;
-        
-        bonusGameEl.style.display = 'flex';
-        bonusStarCount = 0; 
-        
-        const itemSymbol = ['💰', '💎', '⭐', '✨']; 
-        const items = [];
-        const numItems = 15; 
-        const duration = 3000; 
-
-        const bonusGameContainer = bonusGameEl.querySelector('div');
-        const teamColor = teamId === 'teamA' ? 'XANH' : 'VÀNG';
-        bonusGameContainer.innerHTML = `<h3 class="text-3xl font-bold text-yellow-700 mb-4">⭐ THƯỞNG ĐIỂM ĐỘI ${teamColor}! ⭐</h3><p class="text-lg text-gray-700">Nhanh tay bấm vào để nhận thêm điểm thưởng cho đội!</p>`;
-
-
-        for (let i = 0; i < numItems; i++) {
-            const item = document.createElement('div');
-            item.className = 'star';
-            item.textContent = itemSymbol[Math.floor(Math.random() * itemSymbol.length)];
-            
-            const startX = Math.random() * window.innerWidth;
-            item.style.left = `${startX}px`;
-            
-            const fallTime = 1.5 + Math.random() * 1.5;
-            const delay = Math.random() * 0.5;
-
-            item.style.animationName = 'fall';
-            item.style.animationDuration = `${fallTime}s`;
-            item.style.animationDelay = `${delay}s`;
-
-            item.onclick = (e) => {
-                e.stopPropagation();
-                if (bonusGameActive) {
-                    item.textContent = '✅';
-                    item.style.color = '#34d399';
-                    item.style.pointerEvents = 'none';
-                    bonusStarCount++;
-                    
-                    if (teamId === 'teamA') {
-                        scoreTeamAEl.textContent = parseInt(scoreTeamAEl.textContent) + 1;
-                    } else {
-                        scoreTeamBEl.textContent = parseInt(scoreTeamBEl.textContent) + 1;
-                    }
-                }
-            };
-
-            bonusGameEl.appendChild(item);
-            items.push(item);
-        }
-
-        // Đặt timeout để kết thúc mini-game
-        setTimeout(() => {
-            endBonusGame(items, teamId);
-        }, duration + 500);
-    }
-
-    async function endBonusGame(items, teamId) {
-        bonusGameActive = false;
-        
-        // Cộng điểm thưởng chính thức vào Firebase
-        if (bonusStarCount > 0) {
-            const docRef = getGameSessionRef();
-            if (docRef) {
-                await updateDoc(docRef, {
-                    [`teams.${teamId}.score`]: currentGameState.teams[teamId].score + bonusStarCount
-                });
+                feedbackMessage.classList.add('bg-red-800/50', 'border', 'border-red-600');
             }
+
+            feedbackMessage.classList.remove('hidden');
         }
 
-        // Dọn dẹp
-        items.forEach(item => item.remove());
-        bonusGameEl.style.display = 'none';
-        bonusStarCount = 0;
-        
-        if (currentGameState.answeredBy) {
-            nextButton.disabled = false;
-        }
-    }
+        // Chuyển sang câu hỏi tiếp theo
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            // Cập nhật Progress Bar
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
 
-</script>
+            loadQuestion();
+        }
+
+        // Hiển thị kết quả cuối cùng
+        function showResults() {
+            quizSection.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            finalScore.textContent = `${score} / ${questions.length}`;
+            // Set progress bar to 100% when finished
+            progressBar.style.width = '100%'; 
+            // Hiện nút Chơi Lại bộ câu hỏi mới ở đây
+            restartButton.classList.remove('hidden');
+        }
+
+        // Bắt đầu lại game
+        function restartGame() {
+            initializeGame();
+        }
+
+        // Gắn sự kiện cho nút Tiếp theo
+        nextButton.addEventListener('click', nextQuestion);
+
+        // Gắn sự kiện cho nút Chơi Lại (ở dưới cùng)
+        restartButton.addEventListener('click', restartGame);
+
+
+        // Khởi tạo game lần đầu
+        window.onload = initializeGame;
+
+    </script>
+</body>
+</html>
