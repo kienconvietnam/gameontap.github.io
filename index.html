@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Ôn Tập Địa Lí 12 (Đồng Đội)</title>
+    <!-- Tải Tailwind CSS để tạo giao diện đẹp và responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tải Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, collection, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Cấu hình Firebase (Lấy từ biến toàn cục)
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        if (Object.keys(firebaseConfig).length > 0) {
+            window.app = initializeApp(firebaseConfig);
+            window.db = getFirestore(window.app);
+            window.auth = getAuth(window.app);
+            setLogLevel('debug'); // Bật log cho Firebase
+            
+            // Hàm đăng nhập
+            async function initializeAuth() {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(window.auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(window.auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                    // Dù lỗi vẫn cố gắng tiếp tục để lấy UID nếu có thể
+                }
+
+                onAuthStateChanged(window.auth, (user) => {
+                    window.userId = user ? user.uid : crypto.randomUUID();
+                    console.log("User initialized. UID:", window.userId);
+                    // Bắt đầu game sau khi có UID
+                    if (window.onAuthReady) window.onAuthReady();
+                });
+            }
+            initializeAuth();
+        } else {
+            console.error("Firebase configuration not found. Game will run in simulated mode.");
+            window.userId = crypto.randomUUID();
+            window.db = null;
+            if (window.onAuthReady) window.onAuthReady();
+        }
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Light Emerald */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: linear-gradient(135deg, #ecfccb 0%, #d9f99d 100%); /* Light Green Gradient */
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 30px;
+            border: 4px solid #4ade80; /* Emerald 400 */
+        }
+        .option-button {
+            transition: all 0.3s ease;
+            transform: scale(1);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+            padding-left: 20px;
+        }
+        .option-button:hover:not(.disabled):not(.correct):not(.incorrect) {
+            background-color: #6ee7b7; /* Emerald 300 */
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .option-button.correct {
+            background-color: #10b981; /* Green 500 */
+            color: white;
+            animation: pulse-correct 0.5s 3;
+        }
+        .option-button.incorrect {
+            background-color: #ef4444; /* Red 500 */
+            color: white;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% {transform: translateX(0) scale(1);}
+            20%, 60% {transform: translateX(-5px) scale(1);}
+            40%, 80% {transform: translateX(5px) scale(1);}
+        }
+        @keyframes pulse-correct {
+            0% {box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);}
+            70% {box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);}
+            100% {box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);}
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        
+        #bonus-game {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .star {
+            position: absolute;
+            font-size: 3rem;
+            cursor: pointer;
+            user-select: none;
+            color: gold;
+            animation: fall linear forwards;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100px) scale(1); opacity: 1; }
+            100% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+        }
+        .team-score-box {
+            border: 2px solid;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .team-xanh { border-color: #3b82f6; background-color: #eff6ff; color: #1e40af; }
+        .team-vang { border-color: #f59e0b; background-color: #fffbeb; color: #b45309; }
+        .team-label { font-size: 0.75rem; font-weight: 600; }
+        .team-score { font-size: 1.5rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-center text-gray-800 mb-6">
+        <span class="text-green-600">Địa Lí 12</span> - Game Đồng Đội
+    </h1>
+    
+    <!-- Màn hình chọn đội -->
+    <div id="team-screen" class="text-center p-8 space-y-6">
+        <h2 class="text-2xl font-bold text-gray-700">Chọn Đội Của Bạn</h2>
+
+        <!-- THÔNG TIN PHÒNG HIỆN TẠI -->
+        <div class="space-y-2 p-4 bg-green-50/70 rounded-xl border border-green-200">
+            <h3 class="font-bold text-green-700">Phòng hiện tại:</h3>
+            <p class="text-sm text-gray-600">
+                ID Phòng: <span id="room-id" class="font-mono text-sm break-all font-bold text-green-800">Đang tải...</span> 
+                <span onclick="copyRoomLink()" class="cursor-pointer text-blue-500 hover:text-blue-700 ml-1 font-semibold">
+                    [Sao chép Link]
+                </span>
+            </p>
+            <p id="copy-feedback" class="text-xs text-green-500 font-semibold mt-1 opacity-0 transition duration-300"></p>
+        </div>
+        
+        <!-- Ô TẠO PHÒNG MỚI -->
+        <button onclick="createAndRedirectToNewRoom()" class="w-full py-3 px-6 bg-red-500 text-white font-bold rounded-xl shadow-lg hover:bg-red-600 transition duration-200 transform hover:scale-105">
+            Tạo Phòng Mới Ngẫu Nhiên
+        </button>
+
+        <div class="text-lg font-bold text-gray-500">--- HOẶC ---</div>
+
+        <!-- Ô NHẬP ID PHÒNG ĐỂ VÀO -->
+        <div id="join-room-section" class="flex flex-col gap-2">
+            <input type="text" id="join-room-input" placeholder="Nhập ID phòng của bạn bè (ví dụ: room-abc123)"
+                   class="w-full p-3 border-2 border-green-500 rounded-lg focus:border-green-600 focus:ring-1 focus:ring-green-600">
+            <button onclick="joinRoomById()" class="w-full py-3 px-6 bg-blue-500 text-white font-bold rounded-xl shadow-md hover:bg-blue-600 transition duration-200">
+                Vào Phòng
+            </button>
+            <p id="join-feedback" class="text-sm text-red-500 font-semibold mt-1 h-5"></p>
+        </div>
+
+        <div class="text-lg font-bold text-gray-500">--- VÀ CHỌN ĐỘI ---</div>
+        
+        <div class="flex flex-col md:flex-row gap-4 justify-center">
+            <button onclick="joinTeam('teamA')" class="py-4 px-6 team-xanh shadow-lg hover:shadow-xl transition duration-200 w-full md:w-1/2">
+                <span class="text-xl">🔵 Đội Xanh</span>
+                <p class="text-sm font-normal mt-1">Hợp lực cùng đồng đội</p>
+            </button>
+            <button onclick="joinTeam('teamB')" class="py-4 px-6 team-vang shadow-lg hover:shadow-xl transition duration-200 w-full md:w-1/2">
+                <span class="text-xl">🟡 Đội Vàng</span>
+                <p class="text-sm font-normal mt-1">Cùng nhau chinh phục kiến thức</p>
+            </button>
+        </div>
+        <button id="start-button" onclick="startGameInCurrentRoom()" class="mt-8 py-3 px-6 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 transform hover:scale-105 hidden">
+            Admin: Bắt Đầu Lại Game/Xáo Trộn Câu Hỏi (Phòng Hiện Tại)
+        </button>
+    </div>
+
+    <!-- Màn hình Quiz -->
+    <div id="quiz-screen" class="space-y-6 hidden">
+        <!-- Khu vực Leaderboard và thông tin -->
+        <div class="flex justify-between items-center p-3 bg-white/70 rounded-xl shadow-inner border border-green-300">
+            <span class="text-lg font-semibold text-gray-700">Câu: <span id="question-index">1</span>/<span id="total-questions"></span></span>
+            
+            <div id="leaderboard" class="flex gap-4">
+                <div id="score-teamA" class="team-score-box team-xanh">
+                    <span class="team-label mr-2">XANH:</span>
+                    <span class="team-score">0</span>
+                </div>
+                <div id="score-teamB" class="team-score-box team-vang">
+                    <span class="team-label mr-2">VÀNG:</span>
+                    <span class="team-score">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khu vực câu hỏi -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-green-400">
+            <p id="question-text" class="text-xl font-bold text-gray-900 mb-4 text-center"></p>
+            <div id="options-container" class="space-y-3">
+                <!-- Các nút đáp án sẽ được chèn vào đây bằng JS -->
+            </div>
+            <div id="answered-by-team" class="text-center mt-3 text-sm font-medium text-gray-500 hidden">
+                Đội <span id="answering-team-name" class="font-bold"></span> đã trả lời câu này!
+            </div>
+        </div>
+        
+        <!-- Khu vực phản hồi -->
+        <div id="feedback-message" class="text-center text-xl font-bold h-8"></div>
+        
+        <!-- Nút tiếp tục (Chỉ admin hoặc sau khi câu hỏi được giải) -->
+        <button id="next-button" 
+                class="w-full py-3 px-4 bg-yellow-500 text-white font-bold rounded-xl shadow-md hover:bg-yellow-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled
+                onclick="nextQuestion()">
+            Tiếp tục Câu hỏi
+        </button>
+    </div>
+
+    <!-- Màn hình kết thúc -->
+    <div id="end-screen" class="hidden text-center p-8 space-y-6">
+        <h2 class="text-3xl font-extrabold text-green-700">🏆 KẾT THÚC TRẬN ĐẤU 🏆</h2>
+        <p class="text-2xl text-gray-800">
+            Đội <span id="winning-team" class="text-4xl font-bold text-red-600"></span> đã giành chiến thắng!
+        </p>
+        <p id="result-message" class="text-lg text-gray-600"></p>
+        <button onclick="createAndRedirectToNewRoom()" class="py-3 px-6 bg-green-600 text-white font-bold rounded-xl shadow-lg hover:bg-green-700 transition duration-200 transform hover:scale-105">
+            Tạo Phòng Mới
+        </button>
+    </div>
+</div>
+
+<!-- MINI GAME (Trò Chơi Phụ) -->
+<div id="bonus-game">
+    <div class="text-center p-8 bg-yellow-100 rounded-xl shadow-2xl border-4 border-yellow-400 transform scale-110">
+        <h3 class="text-3xl font-bold text-yellow-700 mb-4">⭐ THƯỞNG ĐIỂM BÍ MẬT! ⭐</h3>
+        <p class="text-lg text-gray-700">Nhanh tay bấm vào 💰 để nhận thêm điểm thưởng cho đội!</p>
+    </div>
+</div>
+
+<script type="module">
+    import { doc, setDoc, onSnapshot, updateDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
+    // --- KHỞI TẠO ID PHÒNG ĐỘNG TỪ URL ---
+    const DEFAULT_ROOM_ID = 'default_room_geo_quiz';
+    function getSessionIdFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        // Ưu tiên lấy từ URL, nếu không có, dùng ID mặc định.
+        return urlParams.get('room') || DEFAULT_ROOM_ID;
+    }
+    const SESSION_ID = getSessionIdFromUrl(); 
+    // ------------------------------------
+
+    let myTeamId = null; // teamA hoặc teamB
+    let bonusGameActive = false;
+    let bonusStarCount = 0;
+    
+    // Cấu hình các câu hỏi (Cố định trong code)
+    const questions = [
+        { topic: "Bài 6: Biển Đông và hải đảo", question: "Hai quần đảo lớn thuộc chủ quyền Việt Nam trên Biển Đông là?", options: ["Quần đảo Cát Bà và Côn Đảo", "Quần đảo Trường Sa và Côn Đảo", "Quần đảo Hoàng Sa và Trường Sa", "Quần đảo Lý Sơn và Thổ Chu"], answer: "Quần đảo Hoàng Sa và Trường Sa" },
+        { topic: "Bài 4: Nước trên lãnh thổ Việt Nam", question: "Mạng lưới sông ngòi nước ta có đặc điểm nổi bật là?", options: ["Ngắn, dốc, lưu lượng nước ổn định", "Dài, ít phù sa, lưu lượng nước theo mùa", "Ngắn, dốc, nhiều nước và giàu phù sa", "Ít sông, chủ yếu là sông lớn"], answer: "Ngắn, dốc, nhiều nước và giàu phù sa" },
+        { topic: "Bài 1: Vị trí địa lí và phạm vi lãnh thổ", question: "Điểm cực Bắc phần đất liền nước ta nằm ở vĩ độ nào?", options: ["23°23' Bắc", "8°34' Bắc", "102°10' Đông", "109°24' Đông"], answer: "23°23' Bắc" },
+        { topic: "Bài 3: Khí hậu Việt Nam", question: "Gió mùa Đông Bắc hoạt động mạnh mẽ nhất vào thời gian nào và gây ra thời tiết gì ở miền Bắc?", options: ["Hạ, khô nóng", "Xuân, mưa phùn", "Đông, rét đậm, rét hại", "Thu, mát mẻ"], answer: "Đông, rét đậm, rét hại" },
+        { topic: "Bài 2: Địa hình Việt Nam", question: "Hướng núi chính của địa hình nước ta là gì?", options: ["Vòng cung và Đông - Tây", "Bắc - Nam và Tây Bắc - Đông Nam", "Vòng cung và Tây Bắc - Đông Nam", "Đông - Tây và Bắc - Nam"], answer: "Tây Bắc - Đông Nam và Vòng cung" },
+        { topic: "Bài 3: Khí hậu Việt Nam", question: "Đặc điểm cơ bản của khí hậu Việt Nam là gì?", options: ["Ôn đới gió mùa", "Cận nhiệt đới gió mùa", "Nhiệt đới ẩm gió mùa", "Khí hậu lục địa"], answer: "Nhiệt đới ẩm gió mùa" },
+        { topic: "Bài 5: Thổ nhưỡng và sinh vật", question: "Loại đất chiếm tỉ lệ lớn nhất trong tổng diện tích đất tự nhiên của nước ta là?", options: ["Đất phù sa", "Đất xám", "Đất feralit", "Đất mùn trên núi cao"], answer: "Đất feralit" },
+        { topic: "Bài 2: Địa hình Việt Nam", question: "Địa hình đồi núi chiếm bao nhiêu phần trăm diện tích lãnh thổ nước ta?", options: ["Dưới 50%", "Khoảng 65%", "Khoảng 85%", "Trên 90%"], answer: "Khoảng 85%" },
+        { topic: "Bài 1: Vị trí địa lí và phạm vi lãnh thổ", question: "Việt Nam có bao nhiêu tỉnh và thành phố trực thuộc Trung ương giáp biển?", options: ["28", "32", "24", "40"], answer: "28" },
+        { topic: "Bài 6: Biển Đông và hải đảo", question: "Nội thủy là vùng biển được tính từ đâu?", options: ["Đường cơ sở", "Đường mép nước biển thấp nhất", "Đường ranh giới ngoài của lãnh hải", "Đường ranh giới ngoài của vùng đặc quyền kinh tế"], answer: "Đường cơ sở" }
+    ];
+
+    // Lấy các phần tử DOM
+    const questionIndexEl = document.getElementById('question-index');
+    const totalQuestionsEl = document.getElementById('total-questions');
+    const questionTextEl = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const feedbackMessageEl = document.getElementById('feedback-message');
+    const nextButton = document.getElementById('next-button');
+    const quizScreen = document.getElementById('quiz-screen');
+    const endScreen = document.getElementById('end-screen');
+    const teamScreen = document.getElementById('team-screen');
+    const scoreTeamAEl = document.querySelector('#score-teamA .team-score');
+    const scoreTeamBEl = document.querySelector('#score-teamB .team-score');
+    const answeredByTeamEl = document.getElementById('answered-by-team');
+    const answeringTeamNameEl = document.getElementById('answering-team-name');
+    const winningTeamEl = document.getElementById('winning-team');
+    const resultMessageEl = document.getElementById('result-message');
+    const bonusGameEl = document.getElementById('bonus-game');
+    const startButton = document.getElementById('start-button');
+    const roomIdEl = document.getElementById('room-id'); 
+    const copyFeedbackEl = document.getElementById('copy-feedback');
+    const joinFeedbackEl = document.getElementById('join-feedback');
+    
+    let currentGameState = null;
+
+    // --- UTILITY FUNCTION ---
+    
+    /**
+     * Xáo trộn thứ tự các phần tử trong một mảng (thuật toán Fisher-Yates).
+     */
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    // NEW: Hàm sao chép Link phòng
+    window.copyRoomLink = function() {
+        const fullUrl = window.location.origin + window.location.pathname + `?room=${SESSION_ID}`;
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            copyFeedbackEl.textContent = '✅ Đã sao chép đường link phòng! Gửi cho bạn bè của bạn.';
+            copyFeedbackEl.classList.remove('opacity-0');
+            setTimeout(() => { copyFeedbackEl.classList.add('opacity-0'); }, 3000);
+        }).catch(err => {
+            copyFeedbackEl.textContent = '❌ Lỗi sao chép, vui lòng sao chép URL thủ công.';
+            copyFeedbackEl.classList.remove('opacity-0');
+            setTimeout(() => { copyFeedbackEl.classList.add('opacity-0'); }, 3000);
+        });
+    };
+
+    // NEW: Hàm tạo ID ngẫu nhiên và chuyển hướng
+    window.createAndRedirectToNewRoom = function() {
+        // Tạo ID 6 ký tự ngẫu nhiên
+        const newRoomId = 'room-' + Math.random().toString(36).substring(2, 8);
+        // Chuyển hướng người dùng đến URL với ID phòng mới
+        window.location.href = window.location.origin + window.location.pathname + `?room=${newRoomId}`;
+    };
+
+    // NEW: Hàm tham gia phòng bằng ID
+    window.joinRoomById = function() {
+        const inputId = document.getElementById('join-room-input').value.trim();
+        joinFeedbackEl.textContent = '';
+
+        if (inputId.length < 5) {
+            joinFeedbackEl.textContent = "ID phòng phải có ít nhất 5 ký tự.";
+            return;
+        }
+
+        // Chuyển hướng đến phòng tương ứng
+        window.location.href = window.location.origin + window.location.pathname + `?room=${inputId}`;
+    };
+
+
+    // --- FIREBASE LOGIC ---
+
+    window.onAuthReady = function() {
+        if (!window.db) {
+             // Chạy chế độ mô phỏng nếu không có Firebase
+             roomIdEl.textContent = DEFAULT_ROOM_ID;
+             startButton.classList.remove('hidden'); 
+             console.error("Firebase config not found. Running in simulated mode.");
+             teamScreen.classList.remove('hidden');
+             quizScreen.classList.add('hidden');
+             return;
+        }
+
+        roomIdEl.textContent = SESSION_ID; 
+        setupFirestoreListeners();
+    }
+
+    function getGameSessionRef() {
+        if (!window.db || !window.appId) return null;
+        // Đường dẫn: /artifacts/{appId}/public/data/geo_games/{SESSION_ID}
+        return doc(window.db, "artifacts", window.appId, "public", "data", "geo_games", SESSION_ID);
+    }
+    
+    // Lắng nghe thay đổi trạng thái game (Real-time)
+    function setupFirestoreListeners() {
+        const docRef = getGameSessionRef();
+        if (!docRef) return;
+
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                currentGameState = docSnap.data();
+                updateUI(currentGameState);
+            } else {
+                console.log(`Game session ${SESSION_ID} does not exist. Initializing...`);
+                // Nếu chưa có session, cho phép Admin (người đầu tiên) khởi tạo
+                startButton.classList.remove('hidden');
+                updateUI({ status: 'waiting', currentQuestionIndex: 0, teams: { teamA: { score: 0 }, teamB: { score: 0 } } });
+            }
+        }, (error) => {
+            console.error("Error listening to game state:", error);
+            feedbackMessageEl.textContent = "Lỗi kết nối: " + error.message;
+        });
+    }
+
+    // KHỞI TẠO/ĐẶT LẠI GAME TRONG PHÒNG HIỆN TẠI
+    window.startGameInCurrentRoom = async function() {
+        const docRef = getGameSessionRef();
+        if (!docRef) return;
+        
+        // XÁO TRỘN CÂU HỎI MỚI
+        const shuffledQuestions = [...questions];
+        shuffleArray(shuffledQuestions); 
+
+        try {
+            await setDoc(docRef, {
+                currentQuestionIndex: 0,
+                status: 'in_progress',
+                teams: {
+                    teamA: { score: 0, lastAnswer: null },
+                    teamB: { score: 0, lastAnswer: null }
+                },
+                answeredBy: null, // Mở khóa câu hỏi
+                totalQuestions: questions.length,
+                shuffledQuestions: shuffledQuestions, // LƯU DANH SÁCH CÂU HỎI ĐÃ XÁO TRỘN
+            });
+            console.log(`Game session ${SESSION_ID} reset successfully.`);
+        } catch (e) {
+            console.error("Error resetting game:", e);
+        }
+    }
+
+    // Cập nhật điểm và thông báo đội đã trả lời (Chỉ gọi khi trả lời đúng)
+    async function updateScoreAndNext(teamId, questionIndex, isCorrect) {
+        const docRef = getGameSessionRef();
+        if (!docRef || currentGameState.answeredBy) return; 
+
+        if (isCorrect) {
+            const updatePayload = {
+                answeredBy: teamId, 
+                [`teams.${teamId}.score`]: currentGameState.teams[teamId].score + 1
+            };
+            
+            try {
+                await updateDoc(docRef, updatePayload);
+            } catch (e) {
+                console.error("Error updating score:", e);
+            }
+        }
+    }
+
+    // Chuyển sang câu hỏi tiếp theo
+    window.nextQuestion = async function() {
+        const docRef = getGameSessionRef();
+        if (!docRef || currentGameState.status !== 'in_progress') return;
+
+        const nextIndex = currentGameState.currentQuestionIndex + 1;
+
+        if (nextIndex >= questions.length) {
+             // Kết thúc game
+            await updateDoc(docRef, { status: 'finished' });
+        } else {
+            // Chuyển câu hỏi
+            await updateDoc(docRef, {
+                currentQuestionIndex: nextIndex,
+                answeredBy: null, // Mở khóa câu hỏi mới
+                'teams.teamA.lastAnswer': null, 
+                'teams.teamB.lastAnswer': null 
+            });
+        }
+    }
+
+    // --- GAME UI & LOGIC ---
+
+    // Hàm cập nhật giao diện dựa trên trạng thái Firestore
+    function updateUI(state) {
+        if (!state || !state.status) {
+            teamScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            return;
+        }
+
+        totalQuestionsEl.textContent = questions.length;
+        scoreTeamAEl.textContent = state.teams.teamA.score;
+        scoreTeamBEl.textContent = state.teams.teamB.score;
+
+        if (state.status === 'waiting') {
+            teamScreen.classList.remove('hidden');
+            quizScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+        } else if (state.status === 'in_progress') {
+            teamScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            endScreen.classList.add('hidden');
+            
+            // Xử lý câu hỏi
+            if (state.shuffledQuestions && state.currentQuestionIndex < state.shuffledQuestions.length) {
+                loadQuestion(state);
+            } else {
+                 showEndScreen(state);
+            }
+        } else if (state.status === 'finished') {
+            showEndScreen(state);
+        }
+        
+        // Cập nhật nút "Tiếp tục"
+        const isAnswered = state.answeredBy !== null;
+        nextButton.disabled = !isAnswered;
+        
+        // Luôn hiển thị nút Admin để người tạo phòng có thể khởi động game bất cứ lúc nào
+        startButton.classList.remove('hidden'); 
+    }
+    
+    window.joinTeam = function(teamId) {
+        myTeamId = teamId;
+        console.log("Joined team:", myTeamId);
+        // Sau khi join team, ẩn team screen và chờ trạng thái game
+        teamScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+    }
+
+    function loadQuestion(state) {
+        const index = state.currentQuestionIndex;
+        const q = state.shuffledQuestions[index]; 
+        const answeredTeamId = state.answeredBy;
+
+        questionIndexEl.textContent = index + 1;
+        feedbackMessageEl.innerHTML = '';
+
+        questionTextEl.innerHTML = `<span class="text-sm font-normal text-green-600">(${q.topic})</span><br>${index + 1}. ${q.question}`;
+        optionsContainer.innerHTML = ''; 
+
+        const shuffledOptions = [...q.options];
+
+        // Tạo các nút đáp án
+        shuffledOptions.forEach(option => {
+            const button = document.createElement('button');
+            button.className = 'option-button w-full py-3 rounded-xl border-2 border-green-500 bg-white hover:bg-green-100 font-medium text-gray-800 shadow-md';
+            button.textContent = option;
+            button.onclick = () => checkAnswer(button, option, q.answer, index);
+            optionsContainer.appendChild(button);
+        });
+
+        // Xử lý trạng thái câu hỏi đã được trả lời
+        if (answeredTeamId) {
+            // Vô hiệu hóa tất cả các nút
+            Array.from(optionsContainer.children).forEach(btn => {
+                btn.classList.add('disabled');
+            });
+
+            const correctButton = Array.from(optionsContainer.children).find(btn => btn.textContent === q.answer);
+            if (correctButton) {
+                correctButton.classList.add('correct');
+            }
+            
+            const teamName = answeredTeamId === 'teamA' ? 'Xanh 🔵' : 'Vàng 🟡';
+            answeringTeamNameEl.textContent = teamName;
+            answeredByTeamEl.classList.remove('hidden');
+            feedbackMessageEl.innerHTML = `<span class="text-green-600">✅ Đội ${teamName} đã trả lời đúng!</span>`;
+            
+        } else {
+            // Câu hỏi mới, cho phép trả lời
+            answeredByTeamEl.classList.add('hidden');
+        }
+    }
+
+    // Hàm kiểm tra đáp án (chỉ được gọi nếu answeredBy là null)
+    function checkAnswer(selectedButton, selectedOption, correctAnswer, questionIndex) {
+        if (!myTeamId || currentGameState.answeredBy !== null || currentGameState.currentQuestionIndex !== questionIndex) {
+            return;
+        }
+        
+        // Vô hiệu hóa nút cục bộ để tránh bấm liên tục
+        Array.from(optionsContainer.children).forEach(btn => {
+            btn.classList.add('disabled');
+        });
+
+        const isCorrect = selectedOption === correctAnswer;
+
+        if (isCorrect) {
+            selectedButton.classList.add('correct');
+            feedbackMessageEl.innerHTML = `<span class="text-green-600">🎉 Bạn đã giành quyền trả lời đúng cho Đội ${myTeamId === 'teamA' ? 'Xanh' : 'Vàng'}!</span>`;
+            updateScoreAndNext(myTeamId, questionIndex, true); 
+            showBonusGame(myTeamId); 
+        } else {
+            selectedButton.classList.add('incorrect');
+            feedbackMessageEl.innerHTML = '<span class="text-red-600">❌ Sai rồi! Chờ đồng đội hoặc đối thủ trả lời.</span>';
+            
+            // Tìm và làm nổi bật đáp án đúng sau 1 giây
+            setTimeout(() => {
+                Array.from(optionsContainer.children).forEach(btn => {
+                    if (btn.textContent === correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }, 1000);
+        }
+    }
+    
+    function showEndScreen(state) {
+        quizScreen.classList.add('hidden');
+        endScreen.classList.remove('hidden');
+        
+        const scoreA = state.teams.teamA.score;
+        const scoreB = state.teams.teamB.score;
+        
+        let winningTeamName = '';
+        let message = '';
+
+        if (scoreA > scoreB) {
+            winningTeamName = 'Xanh 🔵';
+            message = 'Đội Xanh đã thể hiện sự hợp tác tuyệt vời và giành chiến thắng chung cuộc!';
+        } else if (scoreB > scoreA) {
+            winningTeamName = 'Vàng 🟡';
+            message = 'Đội Vàng đã chứng tỏ kiến thức vững vàng và giành được vinh quang!';
+        } else {
+            winningTeamName = 'HÒA';
+            message = 'Cả hai đội đều ngang tài ngang sức! Tuyệt vời!';
+        }
+
+        winningTeamEl.textContent = winningTeamName;
+        resultMessageEl.textContent = message;
+    }
+
+    // --- LOGIC CHO MINI GAME ĐỒNG ĐỘI ---
+
+    function showBonusGame(teamId) {
+        if (bonusGameActive) return;
+        bonusGameActive = true;
+        
+        bonusGameEl.style.display = 'flex';
+        bonusStarCount = 0; 
+        
+        const itemSymbol = ['💰', '💎', '⭐', '✨']; 
+        const items = [];
+        const numItems = 15; 
+        const duration = 3000; 
+
+        const bonusGameContainer = bonusGameEl.querySelector('div');
+        const teamColor = teamId === 'teamA' ? 'XANH' : 'VÀNG';
+        bonusGameContainer.innerHTML = `<h3 class="text-3xl font-bold text-yellow-700 mb-4">⭐ THƯỞNG ĐIỂM ĐỘI ${teamColor}! ⭐</h3><p class="text-lg text-gray-700">Nhanh tay bấm vào để nhận thêm điểm thưởng cho đội!</p>`;
+
+
+        for (let i = 0; i < numItems; i++) {
+            const item = document.createElement('div');
+            item.className = 'star';
+            item.textContent = itemSymbol[Math.floor(Math.random() * itemSymbol.length)];
+            
+            const startX = Math.random() * window.innerWidth;
+            item.style.left = `${startX}px`;
+            
+            const fallTime = 1.5 + Math.random() * 1.5;
+            const delay = Math.random() * 0.5;
+
+            item.style.animationName = 'fall';
+            item.style.animationDuration = `${fallTime}s`;
+            item.style.animationDelay = `${delay}s`;
+
+            item.onclick = (e) => {
+                e.stopPropagation();
+                if (bonusGameActive) {
+                    item.textContent = '✅';
+                    item.style.color = '#34d399';
+                    item.style.pointerEvents = 'none';
+                    bonusStarCount++;
+                    
+                    if (teamId === 'teamA') {
+                        scoreTeamAEl.textContent = parseInt(scoreTeamAEl.textContent) + 1;
+                    } else {
+                        scoreTeamBEl.textContent = parseInt(scoreTeamBEl.textContent) + 1;
+                    }
+                }
+            };
+
+            bonusGameEl.appendChild(item);
+            items.push(item);
+        }
+
+        // Đặt timeout để kết thúc mini-game
+        setTimeout(() => {
+            endBonusGame(items, teamId);
+        }, duration + 500);
+    }
+
+    async function endBonusGame(items, teamId) {
+        bonusGameActive = false;
+        
+        // Cộng điểm thưởng chính thức vào Firebase
+        if (bonusStarCount > 0) {
+            const docRef = getGameSessionRef();
+            if (docRef) {
+                await updateDoc(docRef, {
+                    [`teams.${teamId}.score`]: currentGameState.teams[teamId].score + bonusStarCount
+                });
+            }
+        }
+
+        // Dọn dẹp
+        items.forEach(item => item.remove());
+        bonusGameEl.style.display = 'none';
+        bonusStarCount = 0;
+        
+        if (currentGameState.answeredBy) {
+            nextButton.disabled = false;
+        }
+    }
+
+</script>
