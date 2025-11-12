@@ -3,574 +3,1046 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ôn Tập Địa Lí 12 (Cánh Diều)</title>
+    <title>Ma Sói AI Ngoại Tuyến</title>
+    <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tải Icon Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        /* Giao diện Đêm Huyền Bí - Cải tiến */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0d1117; /* Dark background */
+            background-color: #18191a; /* Nền tối dịu hơn */
+            color: #E4E6EB; /* Màu chữ sáng */
+        }
+        
+        header h1 {
+            color: #FFD700; /* Màu vàng đồng */
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .game-card-container {
+            background-color: #242526; /* Thẻ tối ấm hơn */
+            border: 1px solid #3A3B3C;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); 
+            transition: box-shadow 0.3s ease;
+        }
+
+        .game-card-container:hover {
+             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+        }
+
+        #chat-messages {
+            height: 400px;
+            overflow-y: auto;
+        }
+        
+        #chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background-color: #50BFE6; 
+            border-radius: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background-color: #1f2937; 
+        }
+        
+        .lucide {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-        }
-        .quiz-container {
-            max-width: 800px;
-            width: 95%;
-            background-color: #161b22;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease-in-out;
-        }
-        .option-button {
-            transition: all 0.2s;
-            cursor: pointer;
-            user-select: none;
-            border: 2px solid #30363d;
-        }
-        .option-button:hover:not(.disabled):not(.correct):not(.incorrect) {
-            background-color: #232831;
-            border-color: #58a6ff;
-            transform: translateY(-2px);
-        }
-        .option-button.correct {
-            background-color: #234c24; /* Green dark */
-            border-color: #3fb950;
-            animation: pulse-correct 0.6s 1;
-        }
-        .option-button.incorrect {
-            background-color: #4b1a1c; /* Red dark */
-            border-color: #f85149;
-            animation: shake 0.3s 2;
-        }
-        .option-button.disabled {
-            pointer-events: none;
-        }
-        @keyframes pulse-correct {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
+            z-index: 10;
+            border-radius: 1rem;
+            text-align: center;
         }
     </style>
 </head>
-<body class="selection:bg-indigo-700 selection:text-white">
+<body class="min-h-screen p-4 md:p-8">
 
-    <div id="quiz-container" class="quiz-container">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-            <h1 class="text-3xl font-extrabold text-indigo-400">Ôn Tập Địa Lí 12</h1>
-            <div class="text-lg font-semibold text-gray-300">
-                <span id="score" class="text-yellow-400">Điểm: 0</span> / <span id="total-questions">10</span>
-            </div>
-        </div>
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold">MA SÓI AI NGOẠI TUYẾN</h1>
+        <p class="text-gray-400 mt-2" id="user-info">Chế độ offline: Game sẽ nhanh hơn!</p>
+    </header>
 
-        <!-- Question Section -->
-        <div id="quiz-section">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Cột 1: Thông tin người chơi và trạng thái -->
+        <div class="lg:col-span-1 space-y-6">
             
-            <!-- Thanh Tiến Trình (Progress Bar) -->
-            <div class="w-full bg-gray-700 rounded-full h-2.5 mb-6">
-                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-            </div>
-
-            <div class="mb-8 p-4 bg-gray-800 rounded-lg shadow-inner">
-                <p id="question-text" class="text-xl font-medium text-gray-100 leading-relaxed min-h-[60px]">Đang tải câu hỏi...</p>
-                <div class="flex justify-between items-center mt-2 text-sm text-gray-500">
-                    <span id="question-index">Câu: 1/10</span>
-                    <span id="lesson-info">Bài: ...</span>
+            <!-- Trạng thái Game -->
+            <div id="game-status-container" class="game-card-container p-6 relative">
+                <div id="loading-overlay" class="loading-overlay hidden">
+                    <p class="text-white text-xl font-bold p-4 bg-gray-900/80 rounded-lg">AI Đang Xử Lý...</p>
                 </div>
-            </div>
-
-            <!-- Options -->
-            <div id="options-container" class="space-y-4">
-                <!-- Buttons will be dynamically inserted here -->
-            </div>
-
-            <!-- Feedback and Next Button -->
-            <div id="feedback-section" class="mt-8">
-                <div id="feedback-message" class="hidden p-4 rounded-lg transition-all duration-300">
-                    <p class="font-bold mb-2 text-lg" id="feedback-title"></p>
-                    <p class="text-sm" id="feedback-explanation"></p>
+                
+                <div id="game-status" class="text-center">
+                    <p class="text-gray-300">Nhấn BẮT ĐẦU VÁN MỚI để chơi.</p>
                 </div>
-                <div class="flex justify-center mt-6">
-                    <button id="next-button" class="hidden px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-500 transition-all duration-300 disabled:opacity-50" disabled>
-                        Tiếp theo
-                    </button>
-                    <button id="restart-button" class="hidden px-8 py-3 bg-yellow-600 text-white font-bold rounded-xl shadow-lg hover:bg-yellow-500 transition-all duration-300">
-                        Chơi Lại (Bộ câu hỏi mới)
+                <div class="mt-4 text-center">
+                    <button id="start-btn" onclick="startGameOffline()" class="px-6 py-3 bg-red-700 text-white font-black uppercase tracking-wider rounded-xl shadow-xl hover:bg-red-800 transition-colors transform hover:scale-[1.02]">
+                        BẮT ĐẦU VÁN MỚI
                     </button>
                 </div>
             </div>
+
+            <!-- Vai trò của Bạn -->
+            <div class="game-card-container p-6">
+                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
+                    <i data-lucide="shield" class="lucide mr-2 text-amber-400"></i>
+                    Vai Trò Của Bạn
+                </h2>
+                <div id="role-card-container">
+                    <div class="p-4 bg-gray-700 rounded-lg text-white">Chờ phân vai...</div>
+                </div>
+                <p class="mt-4 text-sm text-gray-400 italic">Chú ý: Bạn hành động ban đêm qua các nút dưới tên người chơi.</p>
+            </div>
+            
+            <!-- Bảng Theo Dõi Phiếu Bầu (Mới) -->
+            <div id="vote-tally-board" class="game-card-container p-6 hidden">
+                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
+                    <i data-lucide="bar-chart-2" class="lucide mr-2 text-amber-400"></i>
+                    Bảng Theo Dõi Phiếu Bầu
+                </h2>
+                <div id="tally-results" class="space-y-3">
+                    <!-- Tally results will be rendered here -->
+                </div>
+            </div>
+
+             <!-- Danh sách người chơi -->
+            <div class="game-card-container p-6">
+                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
+                    <i data-lucide="list-checks" class="lucide mr-2 text-amber-400"></i>
+                    Danh Sách Người Chơi
+                </h2>
+                <div id="player-list" class="grid grid-cols-2 gap-4">
+                    <!-- Danh sách người chơi được render tại đây -->
+                </div>
+            </div>
+
         </div>
 
-        <!-- Results Section (Initially hidden) -->
-        <div id="results-section" class="hidden text-center p-8 bg-gray-800 rounded-lg">
-            <h2 class="text-4xl font-extrabold text-yellow-400 mb-4">Hoàn thành!</h2>
-            <p class="text-xl text-gray-200 mb-6">Bạn đã hoàn thành lượt chơi với kết quả:</p>
-            <p id="final-score" class="text-6xl font-black text-indigo-400 mb-8"></p>
-            <button onclick="restartGame()" class="px-10 py-4 bg-indigo-600 text-white text-xl font-bold rounded-xl hover:bg-indigo-500 transition-all duration-300">
-                Chơi Lại Ngay!
-            </button>
+        <!-- Cột 2 & 3: Chat và Thảo luận -->
+        <div class="lg:col-span-2">
+            <div class="game-card-container p-6">
+                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
+                    <i data-lucide="skull" class="lucide mr-2 text-red-500"></i>
+                    Phòng Thảo Luận Ánh Trăng
+                </h2>
+                
+                <!-- Chatbox -->
+                <div id="chat-messages" class="mb-4 p-4 border border-gray-700 rounded-xl bg-gray-900 shadow-inner">
+                    <!-- Tin nhắn được render tại đây -->
+                </div>
+
+                <!-- Input Chat -->
+                <div class="flex space-x-2">
+                    <input type="text" id="chat-input" placeholder="Viết lập luận của bạn..." 
+                           class="flex-grow p-3 rounded-xl bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" disabled>
+                    <button id="send-message-btn" onclick="handleSendMessage()" 
+                            class="px-4 py-3 bg-cyan-600 text-white font-bold rounded-xl shadow-lg hover:bg-cyan-700 transition-colors flex items-center" disabled>
+                        <i data-lucide="send" class="lucide"></i>
+                    </button>
+                    <!-- Nút Bỏ qua Giai đoạn -->
+                    <button id="next-phase-btn" onclick="moveToNextPhase()" 
+                            class="px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors flex items-center" disabled>
+                        <i data-lucide="chevrons-right" class="lucide mr-1"></i> Bỏ Qua
+                    </button>
+                </div>
+                <p class="mt-2 text-xs text-gray-500 italic">AI sẽ tham gia thảo luận tự động. Bạn có thể nhấn 'Bỏ Qua' để chuyển sang giai đoạn bỏ phiếu/đêm ngay.</p>
+            </div>
         </div>
+
     </div>
 
     <script>
-        // Dữ liệu câu hỏi chi tiết về Địa lí 12 (Bài 1 - Bài 6)
-        // Đã bổ sung thêm câu hỏi để tăng tính ngẫu nhiên và không trùng lặp
-        const allQuestions = [
-            // Bài 1: Vị trí địa lí và phạm vi lãnh thổ (6 câu)
-            {
-                lesson: 1,
-                question: "Vị trí địa lí và phạm vi lãnh thổ nước ta quy định đặc điểm cơ bản nào của thiên nhiên Việt Nam?",
-                options: ["Nằm hoàn toàn trong vùng nhiệt đới.","Nằm hoàn toàn trong vùng ôn đới.","Nằm hoàn toàn trong vùng cận nhiệt.","Nằm hoàn toàn trong vùng xích đạo."],
-                answer: "Nằm hoàn toàn trong vùng nhiệt đới.",
-                explanation: "Việt Nam nằm trong đới nội chí tuyến bán cầu Bắc (từ khoảng 8°34'B đến 23°23'B), do đó thiên nhiên mang tính chất nhiệt đới gió mùa."
-            },
-            {
-                lesson: 1,
-                question: "Điểm cực Bắc phần đất liền nước ta thuộc tỉnh nào?",
-                options: ["Lạng Sơn.","Cao Bằng.","Hà Giang.","Điện Biên."],
-                answer: "Hà Giang.",
-                explanation: "Điểm cực Bắc (23°23'B) nằm ở xã Lũng Cú, huyện Đồng Văn, tỉnh Hà Giang."
-            },
-            {
-                lesson: 1,
-                question: "Phần đất liền nước ta kéo dài theo vĩ độ khoảng bao nhiêu?",
-                options: ["Khoảng 7 vĩ độ.","Khoảng 10 vĩ độ.","Khoảng 15 vĩ độ.","Khoảng 20 vĩ độ."],
-                answer: "Khoảng 15 vĩ độ.",
-                explanation: "Từ cực Bắc (23°23'B) đến cực Nam (8°34'B) là khoảng 14°49', gần 15 vĩ độ."
-            },
-            {
-                lesson: 1,
-                question: "Phạm vi lãnh hải của Việt Nam được quy định bởi chiều rộng bao nhiêu hải lí tính từ đường cơ sở?",
-                options: ["12 hải lí.","24 hải lí.","200 hải lí.","15 hải lí."],
-                answer: "12 hải lí.",
-                explanation: "Lãnh hải có chiều rộng 12 hải lí, là vùng biển thuộc chủ quyền quốc gia."
-            },
-            {
-                lesson: 1,
-                question: "Điểm cực Tây phần đất liền nước ta thuộc tỉnh nào?",
-                options: ["Lai Châu.","Lào Cai.","Điện Biên.","Sơn La."],
-                answer: "Điện Biên.",
-                explanation: "Điểm cực Tây (102°10'Đ) nằm ở xã Sín Thầu, huyện Mường Nhé, tỉnh Điện Biên."
-            },
-            {
-                lesson: 1,
-                question: "Việt Nam có bao nhiêu tỉnh thành giáp biển?",
-                options: ["28.","32.","35.","40."],
-                answer: "28.",
-                explanation: "Việt Nam có 28 tỉnh và thành phố trực thuộc Trung ương giáp biển Đông."
-            },
+        // --- CONSTANTS AND STATE ---
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
+        const API_KEY = ""; 
+        const HUMAN_PLAYER_ID = 'human_player_123';
 
-            // Bài 2: Đặc điểm tự nhiên (11 câu)
-            {
-                lesson: 2,
-                question: "Sự phân hóa đa dạng của khí hậu Việt Nam không bị chi phối bởi yếu tố nào sau đây?",
-                options: ["Vị trí địa lí.","Hoạt động của gió mùa.","Địa hình (độ cao, hướng núi).","Hoạt động của núi lửa."],
-                answer: "Hoạt động của núi lửa.",
-                explanation: "Khí hậu Việt Nam chủ yếu chịu tác động của vị trí, gió mùa và địa hình. Việt Nam không có hoạt động núi lửa đáng kể."
-            },
-            {
-                lesson: 2,
-                question: "Dạng địa hình nào chiếm phần lớn diện tích lãnh thổ Việt Nam?",
-                options: ["Đồng bằng.","Đồi núi thấp.","Núi cao.","Cao nguyên bazan."],
-                answer: "Đồi núi thấp.",
-                explanation: "Địa hình đồi núi chiếm 3/4 diện tích lãnh thổ, trong đó đồi núi thấp (dưới 1000m) chiếm phần lớn."
-            },
-            {
-                lesson: 2,
-                question: "Hướng chủ yếu của các dãy núi lớn ở nước ta là:",
-                options: ["Đông – Tây và vòng cung.","Tây Bắc – Đông Nam và vòng cung.","Bắc – Nam và Đông – Tây.","Tây – Đông và Bắc – Nam."],
-                answer: "Tây Bắc – Đông Nam và vòng cung.",
-                explanation: "Hai hướng núi chính là Tây Bắc – Đông Nam (như Hoàng Liên Sơn) và hướng vòng cung (như Đông Triều, Trường Sơn)."
-            },
-            {
-                lesson: 2,
-                question: "Sông ngòi nước ta có đặc điểm nào sau đây?",
-                options: ["Chủ yếu là sông lớn, dốc và nhiều nước.","Mạng lưới sông ngòi dày đặc, phần lớn là sông nhỏ và ngắn.","Hàm lượng phù sa thấp, nước trong.","Chế độ nước điều hòa quanh năm."],
-                answer: "Mạng lưới sông ngòi dày đặc, phần lớn là sông nhỏ và ngắn.",
-                explanation: "Do địa hình hẹp ngang và dốc, Việt Nam có mạng lưới sông ngòi dày đặc, nhưng phần lớn là sông nhỏ và ngắn."
-            },
-            {
-                lesson: 2,
-                question: "Yếu tố nào làm cho thiên nhiên nước ta có sự phân hóa rõ rệt theo chiều cao?",
-                options: ["Sự phân bố các đai đất.","Sự thay đổi nhiệt độ và độ ẩm theo độ cao.","Hoạt động của gió mùa.","Sự phân bố của các vành đai sinh vật."],
-                answer: "Sự thay đổi nhiệt độ và độ ẩm theo độ cao.",
-                explanation: "Nhiệt độ giảm khoảng 0,6°C khi lên cao 100m, tạo nên các đai khí hậu và sinh vật khác nhau."
-            },
-            {
-                lesson: 2,
-                question: "Đặc điểm cơ bản của khí hậu Việt Nam là gì?",
-                options: ["Cận nhiệt ẩm và gió mùa.","Nhiệt đới khô và cận xích đạo.","Nhiệt đới ẩm gió mùa.","Ôn đới hải dương."],
-                answer: "Nhiệt đới ẩm gió mùa.",
-                explanation: "Đây là đặc điểm bao trùm của khí hậu Việt Nam do vị trí địa lí và ảnh hưởng của hoàn lưu gió mùa."
-            },
-            {
-                lesson: 2,
-                question: "Biển Đông ảnh hưởng sâu sắc đến thiên nhiên Việt Nam thông qua yếu tố nào?",
-                options: ["Làm giảm nhiệt độ, giảm độ ẩm.","Làm tăng tính lục địa, giảm mưa.","Làm tăng tính ẩm, điều hòa nhiệt độ.","Làm tăng biên độ nhiệt trong năm."],
-                answer: "Làm tăng tính ẩm, điều hòa nhiệt độ.",
-                explanation: "Biển Đông mang lại lượng hơi ẩm lớn, làm tăng lượng mưa và giảm sự khắc nghiệt của khí hậu."
-            },
-            {
-                lesson: 2,
-                question: "Hồ Ba Bể và hồ Tây được xếp vào loại hình hồ nào?",
-                options: ["Hồ nhân tạo.","Hồ băng hà.","Hồ kiến tạo và hồ móng ngựa.","Hồ núi lửa."],
-                answer: "Hồ kiến tạo và hồ móng ngựa.",
-                explanation: "Hồ Ba Bể là hồ kiến tạo (tectonic), hồ Tây (Hà Nội) là một phần của khúc sông cũ tạo thành hồ móng ngựa."
-            },
+        const TOTAL_PLAYERS = 12; 
+        const BOT_NAMES = ["An", "Bình", "Cúc", "Dũng", "Eun", "Phúc", "Giang", "Hà", "Khoa", "Liên", "Minh"];
+        const ROLES = ['Werewolf', 'Werewolf', 'Werewolf', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter', 'Villager', 'Villager', 'Villager', 'Villager']; 
+        const ROLES_VN = {
+            'Werewolf': 'Ma Sói 🐺',
+            'Seer': 'Tiên Tri 🔮',
+            'Doctor': 'Bác Sĩ 💉',
+            'Witch': 'Phù Thủy 🧪',
+            'Bodyguard': 'Bảo Vệ 🛡️',
+            'Hunter': 'Thợ Săn 🏹',
+            'Villager': 'Dân Làng 🧑‍🌾'
+        };
+        const NIGHT_ACTORS = ['Werewolf', 'Seer', 'Doctor', 'Witch', 'Bodyguard']; 
 
+        let gameState = {};
+        let isProcessingAI = false;
 
-            // Bài 3: Khái quát về các vùng kinh tế (7 câu)
-            {
-                lesson: 3,
-                question: "Vùng kinh tế nào sau đây là đầu tàu kinh tế, có tốc độ tăng trưởng cao nhất cả nước?",
-                options: ["Đồng bằng sông Hồng.","Trung du và miền núi Bắc Bộ.","Đông Nam Bộ.","Đồng bằng sông Cửu Long."],
-                answer: "Đông Nam Bộ.",
-                explanation: "Đông Nam Bộ là vùng kinh tế phát triển năng động nhất và thường dẫn đầu cả nước về GDP, công nghiệp và dịch vụ."
-            },
-            {
-                lesson: 3,
-                question: "Vùng nào sau đây có thế mạnh lớn nhất về cây lương thực (đặc biệt là lúa)?",
-                options: ["Đồng bằng sông Hồng.","Bắc Trung Bộ.","Đồng bằng sông Cửu Long.","Tây Nguyên."],
-                answer: "Đồng bằng sông Cửu Long.",
-                explanation: "Đồng bằng sông Cửu Long là vựa lúa lớn nhất cả nước, chiếm hơn 50% sản lượng lúa."
-            },
-            {
-                lesson: 3,
-                question: "Vùng nào có trữ lượng khoáng sản than đá lớn nhất nước ta?",
-                options: ["Trung du và miền núi Bắc Bộ.","Bắc Trung Bộ.","Tây Nguyên.","Đông Nam Bộ."],
-                answer: "Trung du và miền núi Bắc Bộ.",
-                explanation: "Vùng này, đặc biệt là Quảng Ninh, có trữ lượng than đá lớn nhất cả nước."
-            },
-            {
-                lesson: 3,
-                question: "Vùng nào có vai trò quan trọng trong việc đảm bảo an ninh lương thực và sản xuất hàng hóa nông sản lớn nhất cả nước?",
-                options: ["Trung du và miền núi Bắc Bộ.","Đồng bằng sông Hồng.","Tây Nguyên.","Đồng bằng sông Cửu Long."],
-                answer: "Đồng bằng sông Cửu Long.",
-                explanation: "ĐBSCL là vùng sản xuất lúa, cá, tôm lớn nhất, đảm bảo an ninh lương thực và xuất khẩu."
-            },
-            {
-                lesson: 3,
-                question: "Vùng kinh tế nào có cảng biển nước sâu lớn nhất (Cảng Cái Mép – Thị Vải)?",
-                options: ["Đông Nam Bộ.","Duyên hải Nam Trung Bộ.","Đồng bằng sông Hồng.","Bắc Trung Bộ."],
-                answer: "Đông Nam Bộ.",
-                explanation: "Cảng Cái Mép – Thị Vải, cảng nước sâu quan trọng, nằm ở Đông Nam Bộ (Bà Rịa - Vũng Tàu)."
-            },
-            {
-                lesson: 3,
-                question: "Cây công nghiệp lâu năm quan trọng nhất và nổi tiếng của vùng Tây Nguyên là gì?",
-                options: ["Cao su.","Cà phê.","Hồ tiêu.","Điều."],
-                answer: "Cà phê.",
-                explanation: "Cà phê là cây công nghiệp chủ lực, chiếm sản lượng lớn nhất và nổi tiếng nhất của Tây Nguyên."
-            },
-             {
-                lesson: 3,
-                question: "Khu vực kinh tế trọng điểm phía Bắc bao gồm các tỉnh/thành phố nào sau đây?",
-                options: ["Hà Nội, Hải Phòng, Quảng Ninh, Hải Dương, Hưng Yên.","Hà Nội, Hải Phòng, Quảng Ninh, Thái Nguyên, Vĩnh Phúc.","Hà Nội, Hải Phòng, Vĩnh Phúc, Bắc Ninh, Quảng Ninh.","Hà Nội, Hải Phòng, Quảng Ninh, Hưng Yên, Bắc Ninh, Hải Dương, Vĩnh Phúc."],
-                answer: "Hà Nội, Hải Phòng, Quảng Ninh, Hưng Yên, Bắc Ninh, Hải Dương, Vĩnh Phúc.",
-                explanation: "Khu vực kinh tế trọng điểm Bắc Bộ bao gồm 7 tỉnh/thành phố này, đóng vai trò quan trọng trong sự phát triển kinh tế của miền Bắc."
-            },
-
-            // Bài 4: Dân số và lao động (7 câu)
-            {
-                lesson: 4,
-                question: "Thách thức lớn nhất đối với vấn đề dân số và việc làm ở Việt Nam hiện nay là gì?",
-                options: ["Thiếu nguồn lao động có trình độ cao.","Mất cân bằng giới tính.","Tỉ lệ thất nghiệp ở khu vực nông thôn cao.","Tỉ lệ gia tăng dân số còn cao."],
-                answer: "Thiếu nguồn lao động có trình độ cao.",
-                explanation: "Mặc dù có nguồn lao động dồi dào, Việt Nam đang đối mặt với thách thức lớn về chất lượng và trình độ chuyên môn của lực lượng lao động để đáp ứng yêu cầu của nền kinh tế hiện đại."
-            },
-            {
-                lesson: 4,
-                question: "Dân số nước ta phân bố không đồng đều chủ yếu do yếu tố nào?",
-                options: ["Sự khác biệt về khí hậu và đất đai.","Trình độ phát triển kinh tế và lịch sử khai thác lãnh thổ.","Tình trạng thiên tai và dịch bệnh.","Sự phân hóa về tài nguyên rừng."],
-                answer: "Trình độ phát triển kinh tế và lịch sử khai thác lãnh thổ.",
-                explanation: "Dân số tập trung ở các vùng đồng bằng, đô thị do có kinh tế phát triển, điều kiện sống và việc làm tốt hơn (lịch sử khai thác lâu đời)."
-            },
-            {
-                lesson: 4,
-                question: "Xu hướng biến động dân số nào sau đây đang diễn ra ở Việt Nam?",
-                options: ["Tỉ suất sinh thô tăng mạnh.","Tỉ lệ dân số thành thị giảm.","Tỉ lệ dân số phụ thuộc tăng nhanh do già hóa.","Tỉ lệ lao động nông nghiệp tăng trở lại."],
-                answer: "Tỉ lệ dân số phụ thuộc tăng nhanh do già hóa.",
-                explanation: "Việt Nam đang bước vào giai đoạn già hóa dân số, khiến tỉ lệ dân số trên 60 tuổi tăng, làm tăng gánh nặng phụ thuộc."
-            },
-            {
-                lesson: 4,
-                question: "Hiện tượng 'già hóa dân số' ở Việt Nam có nghĩa là gì?",
-                options: ["Tỉ lệ người trẻ tuổi tăng nhanh.","Tỉ lệ người trên 60 tuổi tăng nhanh.","Tỉ suất sinh thô tăng.","Tỉ suất tử thô giảm."],
-                answer: "Tỉ lệ người trên 60 tuổi tăng nhanh.",
-                explanation: "Già hóa dân số là quá trình tăng tỉ lệ nhóm dân số già (thường là trên 60 hoặc 65 tuổi) trong tổng cơ cấu dân số."
-            },
-            {
-                lesson: 4,
-                question: "Dân số vàng (cơ cấu dân số vàng) là giai đoạn mà:",
-                options: ["Tỉ lệ trẻ em rất cao.","Tỉ lệ người phụ thuộc (trẻ em và người già) cao hơn người trong độ tuổi lao động.","Tỉ lệ người trong độ tuổi lao động cao hơn tỉ lệ người phụ thuộc.","Tỉ lệ nữ cao hơn tỉ lệ nam."],
-                answer: "Tỉ lệ người trong độ tuổi lao động cao hơn tỉ lệ người phụ thuộc.",
-                explanation: "Cơ cấu dân số vàng là giai đoạn tỉ lệ người trong độ tuổi lao động (15-64 tuổi) chiếm ưu thế (thường trên 66%)."
-            },
-            {
-                lesson: 4,
-                question: "Việc chuyển dịch cơ cấu lao động từ nông nghiệp sang công nghiệp và dịch vụ phản ánh điều gì?",
-                options: ["Sự suy giảm của ngành nông nghiệp.","Quá trình công nghiệp hóa, hiện đại hóa đất nước.","Thiếu đất sản xuất nông nghiệp.","Tăng cường nhập khẩu lương thực."],
-                answer: "Quá trình công nghiệp hóa, hiện đại hóa đất nước.",
-                explanation: "Đây là đặc trưng và mục tiêu của quá trình CNH, HĐH nhằm tăng năng suất và giá trị kinh tế."
-            },
-            {
-                lesson: 4,
-                question: "Vùng nào sau đây có mật độ dân số cao nhất nước ta?",
-                options: ["Tây Nguyên.","Đồng bằng sông Hồng.","Đông Nam Bộ.","Trung du và miền núi Bắc Bộ."],
-                answer: "Đồng bằng sông Hồng.",
-                explanation: "Đồng bằng sông Hồng là vùng có điều kiện tự nhiên, kinh tế-xã hội thuận lợi và lịch sử khai thác lâu đời, dẫn đến mật độ dân số cao nhất cả nước."
-            },
-
-            // Bài 5: Khái quát về kinh tế (5 câu)
-            {
-                lesson: 5,
-                question: "Ngành kinh tế nào chiếm tỉ trọng lớn nhất trong cơ cấu GDP của Việt Nam hiện nay?",
-                options: ["Nông nghiệp, lâm nghiệp và thủy sản.","Công nghiệp và xây dựng.","Dịch vụ.","Ngư nghiệp."],
-                answer: "Dịch vụ.",
-                explanation: "Trong cơ cấu kinh tế theo ngành hiện nay (tính theo giá hiện hành), nhóm ngành Dịch vụ thường chiếm tỉ trọng cao nhất, theo sau là Công nghiệp và Xây dựng."
-            },
-            {
-                lesson: 5,
-                question: "Việt Nam đẩy mạnh công nghiệp hóa, hiện đại hóa nhằm mục đích chủ yếu nào?",
-                options: ["Phát triển mạnh ngành du lịch.","Chuyển dịch cơ cấu kinh tế theo hướng hiện đại, tăng trưởng nhanh và bền vững.","Tăng cường giao lưu quốc tế.","Đầu tư vào nông nghiệp công nghệ cao."],
-                answer: "Chuyển dịch cơ cấu kinh tế theo hướng hiện đại, tăng trưởng nhanh và bền vững.",
-                explanation: "Mục tiêu cốt lõi của CNH, HĐH là xây dựng nền kinh tế hiện đại, nâng cao năng suất và chất lượng sống."
-            },
-            {
-                lesson: 5,
-                question: "Yếu tố nào đóng vai trò quan trọng nhất trong việc thu hút vốn đầu tư nước ngoài (FDI) vào Việt Nam?",
-                options: ["Vị trí địa lí gần Trung Quốc.","Nguồn tài nguyên thiên nhiên đa dạng.","Môi trường chính trị ổn định và lực lượng lao động dồi dào, giá rẻ.","Hệ thống giao thông phát triển đồng bộ."],
-                answer: "Môi trường chính trị ổn định và lực lượng lao động dồi dồi, giá rẻ.",
-                explanation: "Sự ổn định về chính trị và nguồn lao động là hai yếu tố cốt lõi và hấp dẫn nhất đối với các nhà đầu tư nước ngoài."
-            },
-            {
-                lesson: 5,
-                question: "Khu vực kinh tế nào thu hút vốn FDI nhiều nhất ở Việt Nam hiện nay?",
-                options: ["Nông nghiệp.","Lâm nghiệp.","Công nghiệp và Xây dựng.","Dịch vụ."],
-                answer: "Công nghiệp và Xây dựng.",
-                explanation: "Các dự án sản xuất, chế tạo, lắp ráp (thuộc Công nghiệp) luôn chiếm tỉ trọng lớn nhất trong tổng vốn FDI đăng kí."
-            },
-            {
-                lesson: 5,
-                question: "Nền kinh tế Việt Nam đang chuyển dịch theo xu hướng nào?",
-                options: ["Giảm tỉ trọng Dịch vụ, tăng tỉ trọng Nông nghiệp.","Tăng tỉ trọng Công nghiệp - Xây dựng và Dịch vụ, giảm tỉ trọng Nông nghiệp.","Tăng tỉ trọng Nông nghiệp, giảm tỉ trọng Công nghiệp - Xây dựng.","Tăng tỉ trọng Công nghiệp - Xây dựng, giảm tỉ trọng Dịch vụ."],
-                answer: "Tăng tỉ trọng Công nghiệp - Xây dựng và Dịch vụ, giảm tỉ trọng Nông nghiệp.",
-                explanation: "Đây là xu hướng chung của quá trình công nghiệp hóa, hiện đại hóa ở Việt Nam."
-            },
-
-            // Bài 6: Ngành nông nghiệp, lâm nghiệp, và thủy sản (6 câu)
-            {
-                lesson: 6,
-                question: "Cây trồng chính của ngành nông nghiệp Việt Nam, chiếm diện tích lớn nhất là gì?",
-                options: ["Cao su.","Cà phê.","Lúa.","Hồ tiêu."],
-                answer: "Lúa.",
-                explanation: "Lúa (đặc biệt là lúa nước) vẫn là cây lương thực quan trọng nhất và chiếm diện tích lớn nhất trong sản xuất nông nghiệp của Việt Nam."
-            },
-            {
-                lesson: 6,
-                question: "Hoạt động nuôi trồng thủy sản của Việt Nam phát triển mạnh mẽ nhất ở vùng nào?",
-                options: ["Bắc Trung Bộ.","Duyên hải Nam Trung Bộ.","Đồng bằng sông Hồng.","Đồng bằng sông Cửu Long."],
-                answer: "Đồng bằng sông Cửu Long.",
-                explanation: "Đồng bằng sông Cửu Long là vựa thủy sản lớn nhất cả nước, dẫn đầu về sản lượng nuôi trồng, đặc biệt là tôm, cá tra."
-            },
-            {
-                lesson: 6,
-                question: "Ngành lâm nghiệp Việt Nam đang chuyển dịch theo hướng nào?",
-                options: ["Tăng cường khai thác rừng tự nhiên.","Trồng rừng phòng hộ và rừng đặc dụng là chủ yếu.","Kết hợp khai thác hợp lí với bảo vệ và trồng rừng.","Chỉ tập trung vào xuất khẩu gỗ tròn."],
-                answer: "Kết hợp khai thác hợp lí với bảo vệ và trồng rừng.",
-                explanation: "Định hướng phát triển bền vững là bảo vệ rừng hiện có, trồng rừng mới và khai thác có kiểm soát."
-            },
-            {
-                lesson: 6,
-                question: "Việc áp dụng công nghệ cao trong nông nghiệp ở Việt Nam chủ yếu nhằm mục đích gì?",
-                options: ["Tăng cường sử dụng thuốc bảo vệ thực vật.","Tăng diện tích gieo trồng.","Nâng cao năng suất, chất lượng sản phẩm và giảm thiểu tác động môi trường.","Giảm chi phí lao động thủ công."],
-                answer: "Nâng cao năng suất, chất lượng sản phẩm và giảm thiểu tác động môi trường.",
-                explanation: "Mục tiêu của nông nghiệp công nghệ cao là tăng hiệu quả, chất lượng và đảm bảo tính bền vững."
-            },
-            {
-                lesson: 6,
-                question: "Ngành đánh bắt hải sản (ngư nghiệp) của Việt Nam phát triển nhất ở vùng nào?",
-                options: ["Vịnh Bắc Bộ.","Trung Bộ.","Vùng biển Tây Nam.","Tất cả các vùng biển."],
-                answer: "Tất cả các vùng biển.",
-                explanation: "Việt Nam có hơn 3.260 km bờ biển với nhiều bãi tôm, bãi cá lớn trải dài từ Bắc vào Nam, phát triển mạnh ở cả ba ngư trường trọng điểm."
-            },
-            {
-                lesson: 6,
-                question: "Cây công nghiệp lâu năm nào được trồng chủ yếu trên đất đỏ bazan ở Tây Nguyên?",
-                options: ["Lúa, ngô.","Cao su, cà phê, hồ tiêu.","Mía, lạc.","Bông, đay."],
-                answer: "Cao su, cà phê, hồ tiêu.",
-                explanation: "Đất đỏ bazan có diện tích lớn ở Tây Nguyên rất phù hợp cho việc trồng các cây công nghiệp lâu năm này."
-            },
-        ];
-
-        let questions = []; // Array chứa bộ câu hỏi cho lượt chơi hiện tại
-        let currentQuestionIndex = 0;
-        let score = 0;
-        const QUESTIONS_PER_ROUND = 10; // Số lượng câu hỏi mỗi vòng chơi
-
-        const questionText = document.getElementById('question-text');
-        const optionsContainer = document.getElementById('options-container');
-        const scoreDisplay = document.getElementById('score');
-        const nextButton = document.getElementById('next-button');
-        const feedbackMessage = document.getElementById('feedback-message');
-        const feedbackTitle = document.getElementById('feedback-title');
-        const feedbackExplanation = document.getElementById('feedback-explanation');
-        const questionIndexDisplay = document.getElementById('question-index');
-        const lessonInfoDisplay = document.getElementById('lesson-info');
-        const resultsSection = document.getElementById('results-section');
-        const quizSection = document.getElementById('quiz-section');
-        const finalScore = document.getElementById('final-score');
-        const totalQuestionsDisplay = document.getElementById('total-questions');
-        const restartButton = document.getElementById('restart-button');
-        const progressBar = document.getElementById('progress-bar');
-
-        // Hàm xáo trộn mảng (Fisher-Yates Shuffle)
-        function shuffle(array) {
+        // --- UTILITIES ---
+        function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+                [array[i], array[j]] = array[j];
             }
+            return array;
         }
 
-        // Khởi tạo/Tải câu hỏi cho lượt chơi mới
-        function initializeGame() {
-            // 1. Xáo trộn toàn bộ ngân hàng câu hỏi
-            shuffle(allQuestions);
-            // 2. Chọn ra 10 câu hỏi đầu tiên cho lượt chơi này
-            questions = allQuestions.slice(0, QUESTIONS_PER_ROUND);
-
-            currentQuestionIndex = 0;
-            score = 0;
-
-            // Cập nhật UI ban đầu
-            scoreDisplay.textContent = `Điểm: ${score}`;
-            totalQuestionsDisplay.textContent = QUESTIONS_PER_ROUND;
-            quizSection.classList.remove('hidden');
-            resultsSection.classList.add('hidden');
-            restartButton.classList.add('hidden'); // Ẩn nút Chơi Lại tạm thời
-            
-            // Reset Progress Bar
-            progressBar.style.width = '0%';
-
-            loadQuestion();
+        function getChatHistory() {
+            if (!gameState.messages) return "Chưa có tin nhắn nào.";
+            return gameState.messages.slice(-25).map(msg => `${msg.senderName}: ${msg.text}`).join('\n');
         }
 
-        // Tải câu hỏi hiện tại và hiển thị
-        function loadQuestion() {
-            if (currentQuestionIndex >= questions.length) {
-                showResults();
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('next-phase-btn').disabled = true;
+            } else {
+                overlay.classList.add('hidden');
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('next-phase-btn').disabled = false;
+            }
+            isProcessingAI = show;
+        }
+
+        // --- GAME FLOW AND INITIALIZATION ---
+
+        function startGameOffline() {
+            const allPlayers = [{ id: HUMAN_PLAYER_ID, name: "Bạn (Human)", isBot: false }];
+            for (let i = 0; i < TOTAL_PLAYERS - 1; i++) {
+                allPlayers.push({ id: `bot_${i}`, name: BOT_NAMES[i], isBot: true });
+            }
+
+            const shuffledRoles = shuffleArray([...ROLES]);
+            const playersWithRoles = allPlayers.map((player, index) => ({
+                ...player,
+                role: shuffledRoles[index],
+                status: 'Alive',
+                voteTargetId: null,
+                actionTargetId: null,
+                witchActionType: null 
+            }));
+
+            gameState = {
+                phase: 'Discussion',
+                dayCount: 1,
+                players: playersWithRoles,
+                messages: [],
+                witchPotions: { heal: 1, kill: 1 },
+                bodyguardLastProtected: null,
+                winner: null
+            };
+
+            addMessage('Người Quản Trò (GM)', 'Trò chơi Ma Sói Đại Chiến AI đã bắt đầu với 12 người chơi! Ngày 1. Hãy bàn luận.', 'GM');
+            renderGameUI();
+            processGameLogic();
+        }
+
+        // --- CORE GAME LOGIC ---
+
+        function processGameLogic() {
+            if (isProcessingAI || gameState.phase === 'GameOver') {
                 return;
             }
+            
+            showLoading(false); // Đảm bảo overlay ẩn khi bắt đầu logic mới
 
-            const currentQ = questions[currentQuestionIndex];
+            switch (gameState.phase) {
+                case 'Discussion':
+                    handleDiscussionPhase();
+                    break;
+                case 'Voting':
+                    handleVotingPhase();
+                    break;
+                case 'Night':
+                    handleNightPhase();
+                    break;
+                case 'GameOver':
+                    // Game Over
+                    break;
+            }
+            renderGameUI();
+        }
 
-            // Ẩn/reset feedback và nút tiếp theo
-            feedbackMessage.classList.add('hidden');
-            feedbackMessage.className = 'hidden p-4 rounded-lg mt-8 transition-all duration-300';
-            nextButton.classList.add('hidden');
-            nextButton.disabled = true;
+        async function handleDiscussionPhase() {
+            // Logic cho BOT nói
+            showLoading(true);
+            const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
+            const discussionPromises = [];
+            const speakingBots = shuffleArray(aliveBots).slice(0, Math.min(aliveBots.length, 6));
 
-            // Cập nhật thông tin câu hỏi
-            questionIndexDisplay.textContent = `Câu: ${currentQuestionIndex + 1}/${questions.length}`;
-            lessonInfoDisplay.textContent = `Bài: ${currentQ.lesson}`;
-            questionText.textContent = currentQ.question;
+            for (const bot of speakingBots) {
+                discussionPromises.push(generateAIResponse(bot, 'discussion'));
+            }
 
-            // Hiển thị các lựa chọn
-            optionsContainer.innerHTML = '';
-            // Xáo trộn thứ tự các lựa chọn để tăng tính "tự tạo"
-            const shuffledOptions = [...currentQ.options];
-            shuffle(shuffledOptions);
+            await Promise.all(discussionPromises);
+            showLoading(false);
+        }
 
-            shuffledOptions.forEach(option => {
-                const button = document.createElement('button');
-                button.textContent = option;
-                button.className = 'option-button w-full text-left p-4 bg-gray-700 text-gray-100 rounded-xl font-medium shadow-md transition-all duration-200';
-                button.onclick = () => checkAnswer(button, option, currentQ.answer, currentQ.explanation);
-                optionsContainer.appendChild(button);
+        async function handleVotingPhase() {
+            // Logic cho BOT bỏ phiếu
+            showLoading(true);
+            await addMessage('Người Quản Trò (GM)', 'ĐÃ HẾT GIỜ BÀN LUẬN. Mời mọi người bỏ phiếu để tìm ra Ma Sói!', 'GM');
+
+            const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
+            const votingPromises = [];
+
+            for (const bot of aliveBots) {
+                votingPromises.push(generateAIResponse(bot, 'vote'));
+            }
+
+            await Promise.all(votingPromises);
+            
+            // Tạm dừng để người chơi có thời gian bỏ phiếu, sau đó tự động bỏ qua
+            setTimeout(() => {
+                if (gameState.phase === 'Voting') {
+                    tallyVotes();
+                }
+            }, 5000); 
+
+            showLoading(false);
+        }
+
+        async function handleNightPhase() {
+             // Logic cho BOT hành động ban đêm
+             showLoading(true);
+             await addMessage('Người Quản Trò (GM)', 'ĐÃ ĐẾN ĐÊM. Ma Sói, Tiên Tri, Bác Sĩ, Phù Thủy và Bảo Vệ hãy hành động!', 'GM');
+
+             const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
+             const nightActionPromises = [];
+             const actingBots = aliveBots.filter(p => NIGHT_ACTORS.includes(p.role));
+
+             for (const bot of actingBots) {
+                 nightActionPromises.push(generateAIResponse(bot, 'night_action'));
+             }
+
+             await Promise.all(nightActionPromises);
+             
+             // Tạm dừng để người chơi có thời gian hành động, sau đó tự động bỏ qua
+             setTimeout(() => {
+                 if (gameState.phase === 'Night') {
+                     executeNightActions();
+                 }
+             }, 5000);
+
+             showLoading(false);
+        }
+
+        function tallyVotes() {
+            if (gameState.phase !== 'Voting' || isProcessingAI) return;
+            showLoading(true);
+
+            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
+            const voteCounts = {};
+            let maxVotes = 0;
+            let tiedPlayers = [];
+            let executedPlayer = null;
+
+            for (const player of alivePlayers) {
+                if (player.voteTargetId) {
+                    voteCounts[player.voteTargetId] = (voteCounts[player.voteTargetId] || 0) + 1;
+                }
+            }
+
+            for (const targetId in voteCounts) {
+                const votes = voteCounts[targetId];
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    tiedPlayers = [targetId];
+                } else if (votes === maxVotes) {
+                    tiedPlayers.push(targetId);
+                }
+            }
+            
+            let postExecutionMessage = '';
+            let winCheckId = null; 
+
+            if (tiedPlayers.length === 1 && maxVotes > 0) {
+                const executedId = tiedPlayers[0];
+                executedPlayer = gameState.players.find(p => p.id === executedId);
+                
+                // Cập nhật trạng thái
+                gameState.players = gameState.players.map(p => p.id === executedId ? { ...p, status: 'Dead' } : p);
+                winCheckId = executedId;
+                
+                if (executedPlayer.role === 'Hunter') {
+                    const newPlayers = gameState.players; 
+                    const aliveTargets = newPlayers.filter(p => p.status === 'Alive' && p.id !== executedId);
+                    if (aliveTargets.length > 0) {
+                        const hunterShotId = shuffleArray(aliveTargets)[0].id;
+                        const shotPlayer = gameState.players.find(p => p.id === hunterShotId);
+                        postExecutionMessage = ` Thợ Săn ${executedPlayer.name} đã kịp bắn ${shotPlayer.name} (${ROLES_VN[shotPlayer.role]}) trước khi chết.`;
+                        
+                        gameState.players.forEach(p => {
+                            if (p.id === hunterShotId) p.status = 'Dead';
+                        });
+                        winCheckId = hunterShotId; 
+                    }
+                }
+
+                addMessage('Người Quản Trò (GM)', `${executedPlayer.name} (${ROLES_VN[executedPlayer.role]}) đã bị treo cổ! ${postExecutionMessage}`, 'GM');
+
+            } else {
+                 addMessage('Người Quản Trò (GM)', 'Ngày hôm nay hòa phiếu hoặc không ai bị treo cổ.', 'GM');
+            }
+            
+            checkWinCondition(winCheckId);
+            
+            if (gameState.phase !== 'GameOver') {
+                moveToNextPhase('Night');
+            }
+            showLoading(false);
+        }
+
+        function executeNightActions() {
+            if (gameState.phase !== 'Night' || isProcessingAI) return;
+            showLoading(true);
+
+            const actions = gameState.players.filter(p => p.actionTargetId);
+
+            // 1. Werewolf Kill Determination
+            let killTargetId = null;
+            const werewolves = actions.filter(p => p.role === 'Werewolf');
+            if (werewolves.length > 0) {
+                const killVotes = {};
+                werewolves.forEach(w => killVotes[w.actionTargetId] = (killVotes[w.actionTargetId] || 0) + 1);
+                const killTargets = Object.entries(killVotes).sort(([, a], [, b]) => b - a);
+                if (killTargets.length > 0) {
+                    killTargetId = killTargets[0][0]; 
+                }
+            }
+
+            // 2. Protection (Doctor & Bodyguard)
+            const doctor = actions.find(p => p.role === 'Doctor');
+            const bodyguard = actions.find(p => p.role === 'Bodyguard');
+            
+            let savedTargetId = doctor ? doctor.actionTargetId : null;
+            let protectedTargetId = bodyguard ? bodyguard.actionTargetId : null;
+            let finalKilledByWolfId = killTargetId;
+            
+            let wolfKillMessage = '';
+            
+            if (killTargetId) {
+                if (killTargetId === savedTargetId) {
+                    finalKilledByWolfId = null; wolfKillMessage = `${gameState.players.find(p => p.id === killTargetId).name} đã được Bác Sĩ cứu! `;
+                } else if (killTargetId === protectedTargetId) {
+                    finalKilledByWolfId = null; wolfKillMessage = `${gameState.players.find(p => p.id === killTargetId).name} đã được Bảo Vệ! `;
+                }
+            }
+            
+            // 3. Witch Actions
+            const witch = actions.find(p => p.role === 'Witch');
+            let killedByWitchId = null;
+            let newWitchPotions = { ...gameState.witchPotions };
+
+            if (witch) {
+                const witchAction = actions.find(p => p.id === witch.id);
+                const actionType = witchAction ? witchAction.witchActionType : null;
+
+                if (actionType === 'Heal' && newWitchPotions.heal > 0) {
+                    if (finalKilledByWolfId === witchAction.actionTargetId) {
+                         finalKilledByWolfId = null;
+                         wolfKillMessage += `${gameState.players.find(p => p.id === witchAction.actionTargetId).name} được Phù Thủy cứu! `;
+                         newWitchPotions.heal -= 1;
+                    }
+                } else if (actionType === 'Kill' && newWitchPotions.kill > 0) {
+                    killedByWitchId = witchAction.actionTargetId;
+                    newWitchPotions.kill -= 1;
+                }
+            }
+
+            // 4. Seer Reveal (private system message)
+            const seerActor = actions.find(p => p.role === 'Seer');
+            if (seerActor) {
+                const target = gameState.players.find(p => p.id === seerActor.actionTargetId);
+                const revealMessage = `[GM -> ${seerActor.name}]: ${target.name} là ${ROLES_VN[target.role]}.`;
+                addMessage('Người Quản Trò (GM)', revealMessage, 'System_Private');
+            }
+
+
+            // 5. Determine Final Death and Hunter Effect
+            let finalKilledId = finalKilledByWolfId || killedByWitchId;
+            let nightMessage = wolfKillMessage;
+            let winCheckId = finalKilledId;
+
+            if (finalKilledId) {
+                const killedPlayer = gameState.players.find(p => p.id === finalKilledId);
+                
+                // Update player status
+                gameState.players = gameState.players.map(p => p.id === finalKilledId ? { ...p, status: 'Dead' } : p);
+                
+                const killSource = finalKilledByWolfId ? 'Ma Sói' : 'Phù Thủy';
+                nightMessage += `${killedPlayer.name} (${ROLES_VN[killedPlayer.role]}) đã chết vì bị ${killSource} tấn công.`;
+                
+                // Hunter Death Effect
+                if (killedPlayer.role === 'Hunter') {
+                    const hunter = killedPlayer;
+                    const aliveTargets = gameState.players.filter(p => p.status === 'Alive' && p.id !== hunter.id);
+                    if (aliveTargets.length > 0) {
+                        const hunterShotId = shuffleArray(aliveTargets)[0].id;
+                        const shotPlayer = gameState.players.find(p => p.id === hunterShotId);
+                        nightMessage += ` Thợ Săn ${hunter.name} đã kịp bắn ${shotPlayer.name} (${ROLES_VN[shotPlayer.role]}) trước khi chết.`;
+                        gameState.players.forEach(p => {
+                            if (p.id === hunterShotId) p.status = 'Dead';
+                        });
+                        winCheckId = hunterShotId; 
+                    }
+                }
+            } else {
+                if (!nightMessage.includes('cứu') && !nightMessage.includes('Bảo Vệ')) {
+                    nightMessage += 'Không ai bị giết đêm nay.';
+                }
+            }
+
+            // 6. Update Game State for next day
+            gameState.dayCount += 1;
+            gameState.phase = 'Discussion';
+            gameState.witchPotions = newWitchPotions;
+            gameState.bodyguardLastProtected = protectedTargetId;
+
+            // Reset player actions
+             gameState.players = gameState.players.map(p => ({ 
+                ...p, 
+                voteTargetId: null, 
+                actionTargetId: null,
+                witchActionType: null 
+            }));
+
+
+            addMessage('Người Quản Trò (GM)', nightMessage, 'GM');
+            checkWinCondition(winCheckId);
+            
+            if (gameState.phase !== 'GameOver') {
+                processGameLogic(); // Bắt đầu Giai đoạn Thảo luận mới
+            }
+            showLoading(false);
+        }
+        
+        function checkWinCondition(lastKilledId) {
+            const aliveWerewolves = gameState.players.filter(p => p.status === 'Alive' && p.role === 'Werewolf').length;
+            const aliveVillagers = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
+
+            let winner = null;
+            if (aliveWerewolves >= aliveVillagers) {
+                winner = 'Werewolves';
+            } else if (aliveWerewolves === 0) {
+                winner = 'Villagers';
+            }
+
+            if (winner) {
+                gameState.phase = 'GameOver';
+                gameState.winner = winner;
+                addMessage('Người Quản Trò (GM)', `TRÒ CHƠI KẾT THÚC! Phe ${winner} chiến thắng!`, 'GM');
+            }
+        }
+
+        function moveToNextPhase(nextPhase = null) {
+            if (isProcessingAI || gameState.phase === 'GameOver') return;
+            
+            if (!nextPhase) {
+                if (gameState.phase === 'Discussion') {
+                    nextPhase = 'Voting';
+                } else if (gameState.phase === 'Voting') {
+                    tallyVotes(); // Tự động chấm phiếu và chuyển sang đêm
+                    return; 
+                } else if (gameState.phase === 'Night') {
+                    executeNightActions(); // Tự động thực hiện hành động đêm và chuyển sang ngày
+                    return;
+                }
+            }
+            
+            if (nextPhase) {
+                 // Reset player actions only if moving to a new day/night cycle
+                 if (nextPhase === 'Night' || nextPhase === 'Discussion') {
+                     gameState.players = gameState.players.map(p => ({ 
+                        ...p, 
+                        voteTargetId: null, 
+                        actionTargetId: null,
+                        witchActionType: null 
+                    }));
+                }
+                if (nextPhase === 'Discussion') {
+                    gameState.dayCount += 1;
+                }
+
+                gameState.phase = nextPhase;
+                processGameLogic();
+            }
+        }
+        
+        // --- AI INTEGRATION (GEMINI) ---
+
+        async function generateAIResponse(bot, actionType) {
+            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
+            const otherAlivePlayers = alivePlayers.filter(p => p.id !== bot.id);
+            const alivePlayerNames = otherAlivePlayers.map(p => p.name).join(', ');
+            
+            let systemInstruction = "";
+            let userQuery = "";
+            let expectedJsonSchema = null;
+
+            const chatHistory = getChatHistory();
+            
+            const werewolfCount = gameState.players.filter(p => p.role === 'Werewolf' && p.status === 'Alive').length;
+            const villagerCount = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
+
+            const commonContext = `
+                Bạn là một người chơi Ma Sói thông minh, tên là ${bot.name} (${ROLES_VN[bot.role]}).
+                Bạn đang trong Ngày ${gameState.dayCount}. Số lượng phe Dân Làng (bao gồm vai trò) còn sống: ${villagerCount}. Số lượng Ma Sói còn sống: ${werewolfCount}.
+                Bạn phải cố gắng hết sức để bảo vệ phe của mình và chiến thắng.
+                Các người chơi còn sống là: ${alivePlayerNames}.
+                Lịch sử cuộc trò chuyện gần nhất:
+                ---
+                ${chatHistory}
+                ---
+                Vai trò và Hành động Ban Đêm:
+                - Werewolf (Ma Sói): Giết người (trừ bản thân).
+                - Seer (Tiên Tri): Soi vai người khác.
+                - Doctor (Bác Sĩ): Cứu người bị Ma Sói giết (không thể tự cứu).
+                - Witch (Phù Thủy): Có 1 bình Cứu và 1 bình Giết. (Đã dùng Cứu: ${1 - gameState.witchPotions.heal}, Đã dùng Giết: ${1 - gameState.witchPotions.kill}).
+                - Bodyguard (Bảo Vệ): Bảo vệ 1 người (không được bảo vệ người đã bảo vệ đêm trước, đêm trước là: ${gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai'}).
+            `;
+            
+            if (actionType === 'discussion') {
+                systemInstruction = commonContext + `
+                    Nhiệm vụ của bạn là đưa ra một lập luận sắc bén, thuyết phục để:
+                    - Nếu là Ma Sói: Gây nghi ngờ về một người vô tội hoặc bào chữa cho bản thân/đồng đội. Đừng bao giờ tiết lộ bạn là Ma Sói.
+                    - Nếu là Dân Làng: Đưa ra nhận định dựa trên logic và quan sát hành vi. Tiên Tri nên cẩn thận khi công khai thông tin.
+                    Luận điểm của bạn phải ngắn gọn (TỐI ĐA 2 CÂU), mạnh mẽ và bằng tiếng Việt.
+                `;
+                userQuery = `Ngày ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên nói gì để đóng góp vào cuộc tranh luận?`;
+
+            } else if (actionType === 'vote') {
+                systemInstruction = commonContext + `
+                    Nhiệm vụ của bạn là bỏ phiếu cho người chơi mà bạn tin rằng là Ma Sói.
+                    - Nếu là Ma Sói: Hãy bỏ phiếu cho một người vô tội bị nhiều người nghi ngờ nhất. KHÔNG bỏ phiếu cho đồng đội Ma Sói của bạn.
+                    - Nếu là Dân Làng: Bỏ phiếu cho người mà bạn nghi ngờ nhất dựa trên lập luận.
+                    Bạn PHẢI trả lời bằng một đối tượng JSON.
+                `;
+                userQuery = `Ngày ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên bỏ phiếu cho ai? Chỉ chọn một người từ danh sách còn sống.`;
+                expectedJsonSchema = {
+                    type: "OBJECT",
+                    properties: {
+                        voteTargetName: { type: "STRING", description: "Tên người chơi bạn muốn bỏ phiếu cho." },
+                        voteReason: { type: "STRING", description: "Lý do ngắn gọn (1 câu) cho sự lựa chọn bỏ phiếu." }
+                    }
+                };
+
+            } else if (actionType === 'night_action') {
+                 systemInstruction = commonContext + `
+                    Nhiệm vụ của bạn là thực hiện hành động ban đêm.
+                    - Werewolf: Chọn một người chơi (trừ mình) để giết.
+                    - Bodyguard: Không bảo vệ người đêm trước (${gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai'}).
+                    - Witch: Cố gắng dùng bình Cứu (nếu còn) để cứu nạn nhân đêm nay. Nếu không cần cứu, hãy dùng bình Giết (nếu còn) lên một người bạn nghi ngờ là Ma Sói.
+                    Bạn PHẢI trả lời bằng một đối tượng JSON.
+                `;
+                userQuery = `Đêm ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên thực hiện hành động ban đêm lên ai?
+                Nếu là Phù Thủy, hãy thêm trường 'potionType' vào JSON ('Heal' hoặc 'Kill').
+                `;
+                expectedJsonSchema = {
+                    type: "OBJECT",
+                    properties: {
+                        actionTargetName: { type: "STRING", description: "Tên người chơi là mục tiêu hành động ban đêm của bạn." },
+                        actionReason: { type: "STRING", description: "Lý do ngắn gọn (1 câu) cho hành động này." },
+                        potionType: { type: "STRING", description: "Chỉ cho Phù Thủy: 'Heal' hoặc 'Kill'." }
+                    }
+                };
+            }
+
+            try {
+                const fetchOptions = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemInstruction }] },
+                        ...(expectedJsonSchema && { 
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                responseSchema: expectedJsonSchema
+                            }
+                        })
+                    })
+                };
+
+                const response = await fetch(API_URL + API_KEY, fetchOptions);
+                const result = await response.json();
+                const textResult = result.candidates?.[0]?.content?.parts?.[0]?.text || "Lỗi AI: Không nhận được phản hồi.";
+
+                if (actionType === 'discussion') {
+                    let shortText = textResult.split('. ').slice(0, 2).join('. ');
+                    if (textResult.split('. ').length > 2) shortText += '...';
+                    addMessage(bot.name, shortText, bot.role);
+                } else {
+                    try {
+                        const jsonResponse = JSON.parse(textResult);
+                        const targetName = jsonResponse.voteTargetName || jsonResponse.actionTargetName;
+                        const reason = jsonResponse.voteReason || jsonResponse.actionReason;
+                        const potionType = jsonResponse.potionType || null;
+                        const targetPlayer = gameState.players.find(p => p.name === targetName && p.status === 'Alive');
+                        
+                        if (targetPlayer) {
+                            if (actionType === 'vote') {
+                                updatePlayerAction(bot.id, targetPlayer.id, 'vote', null);
+                                addMessage(bot.name, `*Đã bỏ phiếu cho ${targetPlayer.name} (${reason})*`, 'System_Bot');
+                            } else if (actionType === 'night_action') {
+                                updatePlayerAction(bot.id, targetPlayer.id, 'night_action', potionType);
+                                let msg = `*Đã thực hiện hành động (${ROLES_VN[bot.role]}) lên ${targetPlayer.name}.`;
+                                if (potionType) msg += ` Potion: ${potionType}.`;
+                                msg += ` (${reason})*`;
+                                addMessage(bot.name, msg, 'System_Bot');
+                            }
+                        } else {
+                             addMessage(bot.name, `Lỗi AI: Đã chọn mục tiêu không tồn tại hoặc đã chết (${targetName}). Bỏ qua hành động.`, 'System_Bot_Error');
+                        }
+                    } catch (e) {
+                         addMessage(bot.name, `Lỗi Phân Tích JSON AI. Phản hồi: ${textResult}. Lỗi: ${e.message}`, 'System_Bot_Error');
+                    }
+                }
+
+            } catch (error) {
+                console.error(`Lỗi gọi Gemini cho ${bot.name} (${actionType}):`, error);
+                addMessage(bot.name, `Lỗi kết nối AI. Bỏ qua lượt.`, 'System_Bot_Error');
+            }
+        }
+        
+        // --- DATA MUTATION (NO FIRESTORE) ---
+        
+        function addMessage(senderName, text, role) {
+            gameState.messages.push({
+                senderName,
+                text,
+                role,
+                timestamp: Date.now()
+            });
+            renderChat();
+        }
+
+        function updatePlayerAction(playerId, targetId, actionType, witchActionType = null) {
+            const playerIndex = gameState.players.findIndex(p => p.id === playerId);
+            if (playerIndex !== -1) {
+                if (actionType === 'vote') {
+                    gameState.players[playerIndex].voteTargetId = targetId;
+                } else if (actionType === 'night_action') {
+                    gameState.players[playerIndex].actionTargetId = targetId;
+                    if (gameState.players[playerIndex].role === 'Witch') {
+                         gameState.players[playerIndex].witchActionType = witchActionType;
+                    }
+                }
+            }
+            renderGameUI(); // Re-render after state change
+        }
+
+        // --- UI RENDERING ---
+        
+        function renderRoleCard(player) {
+            const roleVN = ROLES_VN[player.role] || 'Ẩn Danh';
+            
+            const roleColor = player.role === 'Werewolf' ? 'bg-red-900 border-red-600' : 
+                              player.role === 'Seer' ? 'bg-indigo-900 border-indigo-600' :
+                              player.role === 'Doctor' ? 'bg-cyan-900 border-cyan-600' :
+                              player.role === 'Witch' ? 'bg-purple-900 border-purple-600' :
+                              player.role === 'Bodyguard' ? 'bg-amber-900 border-amber-600' :
+                              player.role === 'Hunter' ? 'bg-orange-900 border-orange-600' :
+                              'bg-green-900 border-green-600'; 
+            
+            let extraInfo = '';
+            if (player.role === 'Witch' && gameState.witchPotions) {
+                 extraInfo = `<p class="text-sm opacity-90 mt-1">Bình Cứu: ${gameState.witchPotions.heal} | Bình Giết: ${gameState.witchPotions.kill}</p>`;
+            } else if (player.role === 'Bodyguard') {
+                 const lastProtectedName = gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai';
+                 extraInfo = `<p class="text-sm opacity-90 mt-1">Đêm trước bảo vệ: ${lastProtectedName}</p>`;
+            }
+
+            return `
+                <div class="p-4 rounded-xl shadow-2xl ${roleColor} text-white font-bold transform transition-transform border-b-4 border-r-4">
+                    <p class="text-xl">${player.name}</p>
+                    <p class="text-sm opacity-90">${roleVN}</p>
+                    ${extraInfo}
+                </div>
+            `;
+        }
+
+        function renderPlayerList() {
+            const container = document.getElementById('player-list');
+            container.innerHTML = '';
+            
+            if (!gameState.players) return;
+
+            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
+            
+            gameState.players.forEach(player => {
+                const isAlive = player.status === 'Alive';
+                const isTargetable = isAlive && player.id !== HUMAN_PLAYER_ID;
+                
+                let targetButtons = '';
+                const baseClass = "mt-1 w-full text-white py-2 rounded-lg transition-colors font-semibold shadow-md";
+
+                if (gameState.phase === 'Voting' && isTargetable && humanPlayer.status === 'Alive') {
+                    targetButtons = `<button onclick="handleActionClick('${player.id}', 'vote')" class="bg-amber-600 hover:bg-amber-700 ${baseClass}">Bỏ Phiếu</button>`;
+                } else if (gameState.phase === 'Night' && isTargetable && humanPlayer.status === 'Alive') {
+                    
+                    if (NIGHT_ACTORS.includes(humanPlayer.role)) {
+                         if (humanPlayer.role === 'Witch') {
+                            if (gameState.witchPotions.heal > 0) {
+                                targetButtons += `<button onclick="handleActionClick('${player.id}', 'night_action_heal')" class="bg-cyan-600 hover:bg-cyan-700 ${baseClass}">Cứu (🧪)</button>`;
+                            }
+                            if (gameState.witchPotions.kill > 0) {
+                                targetButtons += `<button onclick="handleActionClick('${player.id}', 'night_action_kill')" class="bg-red-700 hover:bg-red-800 ${baseClass}">Giết (🔪)</button>`;
+                            }
+                         } else if (humanPlayer.role === 'Werewolf') {
+                            if (player.id !== HUMAN_PLAYER_ID) {
+                                targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_wolf')" class="bg-red-700 hover:bg-red-800 ${baseClass}">Giết (🐺)</button>`;
+                            }
+                         } else if (humanPlayer.role === 'Bodyguard') {
+                            if (player.id !== gameState.bodyguardLastProtected) { 
+                                targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_guard')" class="bg-indigo-600 hover:bg-indigo-700 ${baseClass}">Bảo Vệ (🛡️)</button>`;
+                            } else {
+                                targetButtons = `<button disabled class="bg-gray-600 opacity-60 ${baseClass}">Vừa Bảo Vệ</button>`;
+                            }
+                         } else { // Seer, Doctor
+                             targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_generic')" class="bg-blue-600 hover:bg-blue-700 ${baseClass}">Hành Động</button>`;
+                         }
+                    }
+                }
+                
+                const currentVotes = gameState.players.filter(p => p.voteTargetId === player.id).length;
+                const card = `
+                    <div class="p-3 bg-gray-800 rounded-xl shadow-lg transition-all hover:shadow-xl ${isAlive ? 'border border-green-500/50' : 'border border-red-500/50 opacity-60'}">
+                        <p class="text-white font-bold text-lg">${player.name} ${player.id === HUMAN_PLAYER_ID ? '(Bạn)' : ''}</p>
+                        <p class="text-sm ${isAlive ? 'text-green-400' : 'text-red-400'}">${isAlive ? 'Còn Sống' : 'Đã Chết'}</p>
+                        ${isAlive ? `<p class="text-xs text-blue-300 mt-1">Phiếu đã bầu: ${currentVotes}</p>` : ''}
+                        <div class="mt-2 space-y-1">${targetButtons}</div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+        
+        function renderChat() {
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML = '';
+            
+            if (!gameState.messages) return;
+
+            gameState.messages.forEach(msg => {
+                const isBot = msg.senderName !== 'Bạn (Human)' && msg.senderName !== 'Người Quản Trò (GM)';
+                const isGM = msg.role === 'GM';
+                const isSystem = msg.role && msg.role.startsWith('System');
+
+                let senderClass = 'font-bold text-amber-400';
+                let messageClass = 'bg-gray-700 text-gray-100';
+
+                if (isGM) {
+                    senderClass = 'font-black text-red-500';
+                    messageClass = 'bg-gray-800 text-red-300 italic border border-red-900';
+                } else if (isBot) {
+                    senderClass = 'font-bold text-blue-400';
+                    messageClass = 'bg-gray-700 text-gray-100';
+                } else if (isSystem) {
+                    senderClass = 'font-bold text-purple-400';
+                    messageClass = 'bg-gray-900 text-purple-300 text-xs border border-purple-900';
+                }
+                
+                const html = `
+                    <div class="mb-2">
+                        <span class="${senderClass}">${msg.senderName}</span>: 
+                        <span class="${messageClass} px-2 py-1 rounded-lg inline-block break-words shadow-inner">${msg.text}</span>
+                    </div>
+                `;
+                chatBox.innerHTML += html;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function renderVoteTally() {
+            const tallyBoard = document.getElementById('tally-results');
+            const tallyBoardContainer = document.getElementById('vote-tally-board');
+            tallyBoard.innerHTML = '';
+            
+            if (gameState.phase !== 'Voting') {
+                tallyBoardContainer.classList.add('hidden');
+                return;
+            }
+            
+            tallyBoardContainer.classList.remove('hidden');
+
+            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
+            const totalVoters = alivePlayers.length;
+            const voteCounts = {};
+            
+            for (const player of alivePlayers) {
+                if (player.voteTargetId) {
+                    voteCounts[player.voteTargetId] = (voteCounts[player.voteTargetId] || 0) + 1;
+                }
+            }
+
+            const tallyList = [];
+            for (const targetId in voteCounts) {
+                const targetPlayer = gameState.players.find(p => p.id === targetId);
+                if (targetPlayer) {
+                    tallyList.push({ name: targetPlayer.name, votes: voteCounts[targetId] });
+                }
+            }
+            
+            tallyList.sort((a, b) => b.votes - a.votes);
+            
+            if (tallyList.length === 0) {
+                tallyBoard.innerHTML = '<p class="text-gray-400 italic">Chưa có phiếu bầu nào.</p>';
+                return;
+            }
+            
+            const maxVotes = tallyList[0].votes;
+
+            tallyList.forEach(item => {
+                const percentage = (item.votes / totalVoters) * 100;
+                const barColor = item.votes === maxVotes ? 'bg-red-600' : 'bg-amber-500';
+
+                const tallyItem = `
+                    <div class="text-white">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="font-semibold">${item.name}</span>
+                            <span class="font-bold">${item.votes} phiếu</span>
+                        </div>
+                        <div class="w-full bg-gray-600 rounded-full h-2.5">
+                            <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+                tallyBoard.innerHTML += tallyItem;
             });
         }
 
-        // Kiểm tra câu trả lời
-        function checkAnswer(selectedButton, selectedOption, correctAnswer, explanation) {
-            // Vô hiệu hóa tất cả các nút để ngăn chặn click lại
-            Array.from(optionsContainer.children).forEach(btn => btn.classList.add('disabled'));
 
-            nextButton.classList.remove('hidden');
-            nextButton.disabled = false; // Kích hoạt nút Tiếp theo
-
-            const isCorrect = selectedOption === correctAnswer;
-
-            if (isCorrect) {
-                score++;
-                scoreDisplay.textContent = `Điểm: ${score}`;
-                selectedButton.classList.add('correct');
-                feedbackTitle.textContent = "Chính xác! 🎉";
-                feedbackExplanation.textContent = "Bạn đã trả lời đúng câu hỏi này.";
-                feedbackMessage.classList.add('bg-green-800/50', 'border', 'border-green-600');
-            } else {
-                selectedButton.classList.add('incorrect');
-                feedbackTitle.textContent = "Chưa chính xác! 🙁";
-                feedbackExplanation.innerHTML = `Câu trả lời đúng là: <strong>${correctAnswer}</strong>. <br> Giải thích: ${explanation}`;
-
-                // Tìm và highlight câu trả lời đúng
-                Array.from(optionsContainer.children).forEach(btn => {
-                    if (btn.textContent === correctAnswer) {
-                        btn.classList.add('correct');
-                    }
-                });
-                feedbackMessage.classList.add('bg-red-800/50', 'border', 'border-red-600');
-            }
-
-            feedbackMessage.classList.remove('hidden');
-        }
-
-        // Chuyển sang câu hỏi tiếp theo
-        function nextQuestion() {
-            currentQuestionIndex++;
+        function renderGameUI() {
+            if (!gameState.players) return;
             
-            // Cập nhật Progress Bar
-            const progress = ((currentQuestionIndex) / questions.length) * 100;
-            progressBar.style.width = `${progress}%`;
+            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
+            const aliveWerewolves = gameState.players.filter(p => p.status === 'Alive' && p.role === 'Werewolf').length;
+            const aliveVillagers = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
 
-            loadQuestion();
+            if (humanPlayer) {
+                document.getElementById('role-card-container').innerHTML = renderRoleCard(humanPlayer);
+            }
+            
+            const phaseText = gameState.phase === 'Night' ? 'ĐÊM THAO TÚNG 🌑' : 
+                              gameState.phase === 'Discussion' ? 'NGÀY TRANH LUẬN ☀️' : 
+                              gameState.phase === 'Voting' ? 'BỎ PHIẾU TREO CỔ 🔪' : 
+                              `KẾT THÚC 🏁 (Phe ${gameState.winner === 'Werewolves' ? 'MA SÓI' : 'DÂN LÀNG'} thắng)`;
+            
+            document.getElementById('game-status').innerHTML = `
+                <p class="text-3xl font-extrabold text-white mb-2">
+                    ${phaseText}
+                </p>
+                <p class="text-xl font-bold text-amber-300">Ngày ${gameState.dayCount}</p>
+                <p class="text-sm text-gray-400">Dân Làng: ${aliveVillagers} | Ma Sói: ${aliveWerewolves}</p>
+            `;
+
+            renderPlayerList();
+            renderVoteTally(); 
+            lucide.createIcons(); // Re-render icons after DOM update
+
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-message-btn');
+            const nextPhaseBtn = document.getElementById('next-phase-btn');
+            
+            const canSpeak = gameState.phase === 'Discussion' && humanPlayer && humanPlayer.status === 'Alive';
+            const canNextPhase = gameState.phase !== 'GameOver' && !isProcessingAI;
+
+            chatInput.disabled = !canSpeak;
+            sendBtn.disabled = !canSpeak;
+            nextPhaseBtn.disabled = !canNextPhase;
+            
+            if (gameState.phase === 'GameOver') {
+                nextPhaseBtn.disabled = true;
+                nextPhaseBtn.textContent = 'Game Over';
+            } else {
+                 nextPhaseBtn.textContent = 'Bỏ Qua';
+            }
+            
+            if (!canSpeak) {
+                 chatInput.placeholder = (gameState.phase === 'Night') ? "Ban đêm, không được nói." : "Đã chết hoặc không trong giai đoạn nói chuyện.";
+            } else {
+                 chatInput.placeholder = "Viết lập luận của bạn...";
+            }
+        }
+        
+        // --- HANDLERS TƯƠNG TÁC NGƯỜI CHƠI ---
+
+        function handleSendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+            if (message && gameState.phase === 'Discussion' && gameState.players.find(p => p.id === HUMAN_PLAYER_ID).status === 'Alive') {
+                addMessage("Bạn (Human)", message, gameState.players.find(p => p.id === HUMAN_PLAYER_ID).role);
+                chatInput.value = '';
+            }
         }
 
-        // Hiển thị kết quả cuối cùng
-        function showResults() {
-            quizSection.classList.add('hidden');
-            resultsSection.classList.remove('hidden');
-            finalScore.textContent = `${score} / ${questions.length}`;
-            // Set progress bar to 100% when finished
-            progressBar.style.width = '100%'; 
-            // Hiện nút Chơi Lại bộ câu hỏi mới ở đây
-            restartButton.classList.remove('hidden');
+        function handleActionClick(targetId, actionType) {
+            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
+            if (!humanPlayer || humanPlayer.status === 'Dead' || isProcessingAI) return;
+            
+            const targetPlayer = gameState.players.find(p => p.id === targetId);
+            if (!targetPlayer || targetPlayer.status === 'Dead') return;
+
+            if (actionType === 'vote' && gameState.phase === 'Voting') {
+                 updatePlayerAction(HUMAN_PLAYER_ID, targetId, 'vote', null);
+                 addMessage("Bạn (Human)", `*Đã bỏ phiếu cho ${targetPlayer.name}*`, 'System_Human');
+
+            } else if (actionType.startsWith('night_action') && gameState.phase === 'Night') {
+                let witchActionType = null;
+                
+                if (humanPlayer.role === 'Werewolf' && targetId === HUMAN_PLAYER_ID) {
+                    addMessage('Người Quản Trò (GM)', 'Ma Sói không thể giết chính mình!', 'System_Error');
+                    return;
+                }
+
+                if (humanPlayer.role === 'Bodyguard' && targetId === gameState.bodyguardLastProtected) {
+                    addMessage('Người Quản Trò (GM)', 'Bảo vệ không được bảo vệ người đêm trước!', 'System_Error');
+                    return;
+                }
+                
+                if (humanPlayer.role === 'Witch') {
+                    if (actionType.includes('heal')) {
+                        if (gameState.witchPotions.heal <= 0) return;
+                        witchActionType = 'Heal';
+                    } else if (actionType.includes('kill')) {
+                        if (gameState.witchPotions.kill <= 0) return;
+                        witchActionType = 'Kill';
+                    } else return;
+                }
+
+                updatePlayerAction(HUMAN_PLAYER_ID, targetId, 'night_action', witchActionType);
+                let msg = `*Đã thực hiện hành động đêm (${ROLES_VN[humanPlayer.role]}).`;
+                if (witchActionType) msg += ` Potion: ${witchActionType}.`;
+                msg += ` Mục tiêu: ${targetPlayer.name}*`;
+                addMessage("Bạn (Human)", msg, 'System_Human');
+            }
         }
 
-        // Bắt đầu lại game
-        function restartGame() {
-            initializeGame();
-        }
-
-        // Gắn sự kiện cho nút Tiếp theo
-        nextButton.addEventListener('click', nextQuestion);
-
-        // Gắn sự kiện cho nút Chơi Lại (ở dưới cùng)
-        restartButton.addEventListener('click', restartGame);
-
-
-        // Khởi tạo game lần đầu
-        window.onload = initializeGame;
-
+        window.onload = () => {
+             // Khởi tạo trạng thái ban đầu để giao diện không bị lỗi
+             gameState = { phase: 'Starting', dayCount: 0, players: null, messages: [], witchPotions: { heal: 1, kill: 1 }, bodyguardLastProtected: null, winner: null };
+             renderGameUI();
+        };
+        window.startGameOffline = startGameOffline;
+        window.handleSendMessage = handleSendMessage;
+        window.handleActionClick = handleActionClick;
+        window.moveToNextPhase = moveToNextPhase;
     </script>
 </body>
-</html>
+</html> 
