@@ -2,1047 +2,220 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ma Sói AI Ngoại Tuyến</title>
-    <!-- Tải Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tải Icon Lucide -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ứng dụng Đa năng Học tập</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        /* Giao diện Đêm Huyền Bí - Cải tiến */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #18191a; /* Nền tối dịu hơn */
-            color: #E4E6EB; /* Màu chữ sáng */
-        }
-        
-        header h1 {
-            color: #FFD700; /* Màu vàng đồng */
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 2px rgba(255, 255, 255, 0.1);
-        }
-
-        .game-card-container {
-            background-color: #242526; /* Thẻ tối ấm hơn */
-            border: 1px solid #3A3B3C;
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); 
-            transition: box-shadow 0.3s ease;
+            margin: 0;
+            padding: 15px;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #2d3436;
+            /* Hình nền mặc định và thiết lập background */
+            background: #2c3e50 url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2073&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            transition: background 0.8s ease-in-out;
         }
 
-        .game-card-container:hover {
-             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+        /* Lớp phủ mờ để nội dung dễ đọc trên mọi hình nền */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            z-index: -1;
         }
 
-        #chat-messages {
-            height: 400px;
-            overflow-y: auto;
+        .container {
+            width: 100%;
+            max-width: 450px;
+            z-index: 1;
         }
-        
-        #chat-messages::-webkit-scrollbar {
-            width: 8px;
+
+        /* Nút đổi hình nền nhanh */
+        .bg-switcher {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        #chat-messages::-webkit-scrollbar-thumb {
-            background-color: #50BFE6; 
-            border-radius: 4px;
+
+        h2 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 20px 0;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        #chat-messages::-webkit-scrollbar-track {
-            background-color: #1f2937; 
+
+        /* Thẻ Glassmorphism cho các ô màu */
+        .color-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
         }
-        
-        .lucide {
-            width: 20px;
-            height: 20px;
-        }
-        
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+
+        .color-card {
+            aspect-ratio: 1 / 1;
+            border-radius: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10;
-            border-radius: 1rem;
-            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(255,255,255,0.4);
         }
+
+        .color-card:active { transform: scale(0.9); }
+
+        .green { background: linear-gradient(135deg, #00b894, #55efc4); }
+        .yellow { background: linear-gradient(135deg, #fdcb6e, #ffeaa7); color: #636e72; }
+        .red { background: linear-gradient(135deg, #d63031, #ff7675); }
+        .blue { background: linear-gradient(135deg, #0984e3, #74b9ff); }
+
+        /* Camera Box - Phong cách kính mờ cực đẹp */
+        .camera-box {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 30px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .camera-box h2 { color: #2d3436; text-shadow: none; margin-top: 0; }
+
+        .video-wrapper {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 4 / 3;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        video { width: 100%; height: 100%; object-fit: cover; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary { background: #2d3436; color: white; }
+        .btn-secondary { background: #ffffff; color: #2d3436; }
+        .btn:active { transform: translateY(2px); box-shadow: none; }
+
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body>
 
-    <header class="text-center mb-8">
-        <h1 class="text-4xl font-extrabold">MA SÓI AI NGOẠI TUYẾN</h1>
-        <p class="text-gray-400 mt-2" id="user-info">Chế độ offline: Game sẽ nhanh hơn!</p>
-    </header>
+    <div class="overlay"></div>
+    
+    <button class="bg-switcher" onclick="changeBackground()" title="Đổi hình nền">🖼️</button>
 
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="container">
+        <h2>Học Tập Thông Minh</h2>
         
-        <!-- Cột 1: Thông tin người chơi và trạng thái -->
-        <div class="lg:col-span-1 space-y-6">
-            
-            <!-- Trạng thái Game -->
-            <div id="game-status-container" class="game-card-container p-6 relative">
-                <div id="loading-overlay" class="loading-overlay hidden">
-                    <p class="text-white text-xl font-bold p-4 bg-gray-900/80 rounded-lg">AI Đang Xử Lý...</p>
-                </div>
-                
-                <div id="game-status" class="text-center">
-                    <p class="text-gray-300">Nhấn BẮT ĐẦU VÁN MỚI để chơi.</p>
-                </div>
-                <div class="mt-4 text-center">
-                    <button id="start-btn" onclick="startGameOffline()" class="px-6 py-3 bg-red-700 text-white font-black uppercase tracking-wider rounded-xl shadow-xl hover:bg-red-800 transition-colors transform hover:scale-[1.02]">
-                        BẮT ĐẦU VÁN MỚI
-                    </button>
-                </div>
-            </div>
-
-            <!-- Vai trò của Bạn -->
-            <div class="game-card-container p-6">
-                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
-                    <i data-lucide="shield" class="lucide mr-2 text-amber-400"></i>
-                    Vai Trò Của Bạn
-                </h2>
-                <div id="role-card-container">
-                    <div class="p-4 bg-gray-700 rounded-lg text-white">Chờ phân vai...</div>
-                </div>
-                <p class="mt-4 text-sm text-gray-400 italic">Chú ý: Bạn hành động ban đêm qua các nút dưới tên người chơi.</p>
-            </div>
-            
-            <!-- Bảng Theo Dõi Phiếu Bầu (Mới) -->
-            <div id="vote-tally-board" class="game-card-container p-6 hidden">
-                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
-                    <i data-lucide="bar-chart-2" class="lucide mr-2 text-amber-400"></i>
-                    Bảng Theo Dõi Phiếu Bầu
-                </h2>
-                <div id="tally-results" class="space-y-3">
-                    <!-- Tally results will be rendered here -->
-                </div>
-            </div>
-
-             <!-- Danh sách người chơi -->
-            <div class="game-card-container p-6">
-                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
-                    <i data-lucide="list-checks" class="lucide mr-2 text-amber-400"></i>
-                    Danh Sách Người Chơi
-                </h2>
-                <div id="player-list" class="grid grid-cols-2 gap-4">
-                    <!-- Danh sách người chơi được render tại đây -->
-                </div>
-            </div>
-
+        <div class="color-grid">
+            <div class="color-card green" onclick="speak('A', '')">A</div>
+            <div class="color-card yellow" onclick="speak('B', '')">B</div>
+            <div class="color-card red" onclick="speak('C', '')">C</div>
+            <div class="color-card blue" onclick="speak('D', '')">D</div>
         </div>
 
-        <!-- Cột 2 & 3: Chat và Thảo luận -->
-        <div class="lg:col-span-2">
-            <div class="game-card-container p-6">
-                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center">
-                    <i data-lucide="skull" class="lucide mr-2 text-red-500"></i>
-                    Phòng Thảo Luận Ánh Trăng
-                </h2>
-                
-                <!-- Chatbox -->
-                <div id="chat-messages" class="mb-4 p-4 border border-gray-700 rounded-xl bg-gray-900 shadow-inner">
-                    <!-- Tin nhắn được render tại đây -->
-                </div>
-
-                <!-- Input Chat -->
-                <div class="flex space-x-2">
-                    <input type="text" id="chat-input" placeholder="Viết lập luận của bạn..." 
-                           class="flex-grow p-3 rounded-xl bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" disabled>
-                    <button id="send-message-btn" onclick="handleSendMessage()" 
-                            class="px-4 py-3 bg-cyan-600 text-white font-bold rounded-xl shadow-lg hover:bg-cyan-700 transition-colors flex items-center" disabled>
-                        <i data-lucide="send" class="lucide"></i>
-                    </button>
-                    <!-- Nút Bỏ qua Giai đoạn -->
-                    <button id="next-phase-btn" onclick="moveToNextPhase()" 
-                            class="px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-colors flex items-center" disabled>
-                        <i data-lucide="chevrons-right" class="lucide mr-1"></i> Bỏ Qua
-                    </button>
-                </div>
-                <p class="mt-2 text-xs text-gray-500 italic">AI sẽ tham gia thảo luận tự động. Bạn có thể nhấn 'Bỏ Qua' để chuyển sang giai đoạn bỏ phiếu/đêm ngay.</p>
+        <div class="camera-box">
+            <h2>Quét Đề Cương</h2>
+            <div class="video-wrapper">
+                <video id="webcam" autoplay playsinline></video>
+            </div>
+            <div class="controls">
+                <button class="btn btn-secondary" onclick="initCamera()">📸 Mở Camera</button>
+                <button class="btn btn-primary" onclick="toggleMagic()">✨ Xóa Đáp Án</button>
             </div>
         </div>
-
     </div>
 
     <script>
-        // --- CONSTANTS AND STATE ---
-        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=";
-        const API_KEY = ""; 
-        const HUMAN_PLAYER_ID = 'human_player_123';
-
-        const TOTAL_PLAYERS = 12; 
-        const BOT_NAMES = ["An", "Bình", "Cúc", "Dũng", "Eun", "Phúc", "Giang", "Hà", "Khoa", "Liên", "Minh"];
-        const ROLES = ['Werewolf', 'Werewolf', 'Werewolf', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter', 'Villager', 'Villager', 'Villager', 'Villager']; 
-        const ROLES_VN = {
-            'Werewolf': 'Ma Sói 🐺',
-            'Seer': 'Tiên Tri 🔮',
-            'Doctor': 'Bác Sĩ 💉',
-            'Witch': 'Phù Thủy 🧪',
-            'Bodyguard': 'Bảo Vệ 🛡️',
-            'Hunter': 'Thợ Săn 🏹',
-            'Villager': 'Dân Làng 🧑‍🌾'
-        };
-        const NIGHT_ACTORS = ['Werewolf', 'Seer', 'Doctor', 'Witch', 'Bodyguard']; 
-
-        let gameState = {};
-        let isProcessingAI = false;
-
-        // --- UTILITIES ---
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = array[j];
-            }
-            return array;
+        // 1. Đổi hình nền ngẫu nhiên từ Unsplash
+        function changeBackground() {
+            const keywords = ['study', 'library', 'workspace', 'nature', 'abstract', 'minimal'];
+            const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+            // Thêm timestamp để trình duyệt không load lại ảnh cũ
+            const imageUrl = `https://source.unsplash.com/featured/1080x1920/?${randomKeyword}&t=${new Date().getTime()}`;
+            document.body.style.backgroundImage = `url('${imageUrl}')`;
         }
 
-        function getChatHistory() {
-            if (!gameState.messages) return "Chưa có tin nhắn nào.";
-            return gameState.messages.slice(-25).map(msg => `${msg.senderName}: ${msg.text}`).join('\n');
+        // 2. Tính năng đọc tên
+        function speak(label, colorName) {
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(`${label}. ${colorName}`);
+            msg.lang = 'vi-VN';
+            msg.rate = 1;
+            window.speechSynthesis.speak(msg);
         }
 
-        function showLoading(show) {
-            const overlay = document.getElementById('loading-overlay');
-            if (show) {
-                overlay.classList.remove('hidden');
-                document.getElementById('start-btn').disabled = true;
-                document.getElementById('next-phase-btn').disabled = true;
-            } else {
-                overlay.classList.add('hidden');
-                document.getElementById('start-btn').disabled = false;
-                document.getElementById('next-phase-btn').disabled = false;
-            }
-            isProcessingAI = show;
-        }
-
-        // --- GAME FLOW AND INITIALIZATION ---
-
-        function startGameOffline() {
-            const allPlayers = [{ id: HUMAN_PLAYER_ID, name: "Bạn (Human)", isBot: false }];
-            for (let i = 0; i < TOTAL_PLAYERS - 1; i++) {
-                allPlayers.push({ id: `bot_${i}`, name: BOT_NAMES[i], isBot: true });
-            }
-
-            const shuffledRoles = shuffleArray([...ROLES]);
-            const playersWithRoles = allPlayers.map((player, index) => ({
-                ...player,
-                role: shuffledRoles[index],
-                status: 'Alive',
-                voteTargetId: null,
-                actionTargetId: null,
-                witchActionType: null 
-            }));
-
-            gameState = {
-                phase: 'Discussion',
-                dayCount: 1,
-                players: playersWithRoles,
-                messages: [],
-                witchPotions: { heal: 1, kill: 1 },
-                bodyguardLastProtected: null,
-                winner: null
-            };
-
-            addMessage('Người Quản Trò (GM)', 'Trò chơi Ma Sói Đại Chiến AI đã bắt đầu với 12 người chơi! Ngày 1. Hãy bàn luận.', 'GM');
-            renderGameUI();
-            processGameLogic();
-        }
-
-        // --- CORE GAME LOGIC ---
-
-        function processGameLogic() {
-            if (isProcessingAI || gameState.phase === 'GameOver') {
-                return;
-            }
-            
-            showLoading(false); // Đảm bảo overlay ẩn khi bắt đầu logic mới
-
-            switch (gameState.phase) {
-                case 'Discussion':
-                    handleDiscussionPhase();
-                    break;
-                case 'Voting':
-                    handleVotingPhase();
-                    break;
-                case 'Night':
-                    handleNightPhase();
-                    break;
-                case 'GameOver':
-                    // Game Over
-                    break;
-            }
-            renderGameUI();
-        }
-
-        async function handleDiscussionPhase() {
-            // Logic cho BOT nói
-            showLoading(true);
-            const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
-            const discussionPromises = [];
-            const speakingBots = shuffleArray(aliveBots).slice(0, Math.min(aliveBots.length, 6));
-
-            for (const bot of speakingBots) {
-                discussionPromises.push(generateAIResponse(bot, 'discussion'));
-            }
-
-            await Promise.all(discussionPromises);
-            showLoading(false);
-        }
-
-        async function handleVotingPhase() {
-            // Logic cho BOT bỏ phiếu
-            showLoading(true);
-            await addMessage('Người Quản Trò (GM)', 'ĐÃ HẾT GIỜ BÀN LUẬN. Mời mọi người bỏ phiếu để tìm ra Ma Sói!', 'GM');
-
-            const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
-            const votingPromises = [];
-
-            for (const bot of aliveBots) {
-                votingPromises.push(generateAIResponse(bot, 'vote'));
-            }
-
-            await Promise.all(votingPromises);
-            
-            // Tạm dừng để người chơi có thời gian bỏ phiếu, sau đó tự động bỏ qua
-            setTimeout(() => {
-                if (gameState.phase === 'Voting') {
-                    tallyVotes();
-                }
-            }, 5000); 
-
-            showLoading(false);
-        }
-
-        async function handleNightPhase() {
-             // Logic cho BOT hành động ban đêm
-             showLoading(true);
-             await addMessage('Người Quản Trò (GM)', 'ĐÃ ĐẾN ĐÊM. Ma Sói, Tiên Tri, Bác Sĩ, Phù Thủy và Bảo Vệ hãy hành động!', 'GM');
-
-             const aliveBots = gameState.players.filter(p => p.isBot && p.status === 'Alive');
-             const nightActionPromises = [];
-             const actingBots = aliveBots.filter(p => NIGHT_ACTORS.includes(p.role));
-
-             for (const bot of actingBots) {
-                 nightActionPromises.push(generateAIResponse(bot, 'night_action'));
-             }
-
-             await Promise.all(nightActionPromises);
-             
-             // Tạm dừng để người chơi có thời gian hành động, sau đó tự động bỏ qua
-             setTimeout(() => {
-                 if (gameState.phase === 'Night') {
-                     executeNightActions();
-                 }
-             }, 5000);
-
-             showLoading(false);
-        }
-
-        function tallyVotes() {
-            if (gameState.phase !== 'Voting' || isProcessingAI) return;
-            showLoading(true);
-
-            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
-            const voteCounts = {};
-            let maxVotes = 0;
-            let tiedPlayers = [];
-            let executedPlayer = null;
-
-            for (const player of alivePlayers) {
-                if (player.voteTargetId) {
-                    voteCounts[player.voteTargetId] = (voteCounts[player.voteTargetId] || 0) + 1;
-                }
-            }
-
-            for (const targetId in voteCounts) {
-                const votes = voteCounts[targetId];
-                if (votes > maxVotes) {
-                    maxVotes = votes;
-                    tiedPlayers = [targetId];
-                } else if (votes === maxVotes) {
-                    tiedPlayers.push(targetId);
-                }
-            }
-            
-            let postExecutionMessage = '';
-            let winCheckId = null; 
-
-            if (tiedPlayers.length === 1 && maxVotes > 0) {
-                const executedId = tiedPlayers[0];
-                executedPlayer = gameState.players.find(p => p.id === executedId);
-                
-                // Cập nhật trạng thái
-                gameState.players = gameState.players.map(p => p.id === executedId ? { ...p, status: 'Dead' } : p);
-                winCheckId = executedId;
-                
-                if (executedPlayer.role === 'Hunter') {
-                    const newPlayers = gameState.players; 
-                    const aliveTargets = newPlayers.filter(p => p.status === 'Alive' && p.id !== executedId);
-                    if (aliveTargets.length > 0) {
-                        const hunterShotId = shuffleArray(aliveTargets)[0].id;
-                        const shotPlayer = gameState.players.find(p => p.id === hunterShotId);
-                        postExecutionMessage = ` Thợ Săn ${executedPlayer.name} đã kịp bắn ${shotPlayer.name} (${ROLES_VN[shotPlayer.role]}) trước khi chết.`;
-                        
-                        gameState.players.forEach(p => {
-                            if (p.id === hunterShotId) p.status = 'Dead';
-                        });
-                        winCheckId = hunterShotId; 
-                    }
-                }
-
-                addMessage('Người Quản Trò (GM)', `${executedPlayer.name} (${ROLES_VN[executedPlayer.role]}) đã bị treo cổ! ${postExecutionMessage}`, 'GM');
-
-            } else {
-                 addMessage('Người Quản Trò (GM)', 'Ngày hôm nay hòa phiếu hoặc không ai bị treo cổ.', 'GM');
-            }
-            
-            checkWinCondition(winCheckId);
-            
-            if (gameState.phase !== 'GameOver') {
-                moveToNextPhase('Night');
-            }
-            showLoading(false);
-        }
-
-        function executeNightActions() {
-            if (gameState.phase !== 'Night' || isProcessingAI) return;
-            showLoading(true);
-
-            const actions = gameState.players.filter(p => p.actionTargetId);
-
-            // 1. Werewolf Kill Determination
-            let killTargetId = null;
-            const werewolves = actions.filter(p => p.role === 'Werewolf');
-            if (werewolves.length > 0) {
-                const killVotes = {};
-                werewolves.forEach(w => killVotes[w.actionTargetId] = (killVotes[w.actionTargetId] || 0) + 1);
-                const killTargets = Object.entries(killVotes).sort(([, a], [, b]) => b - a);
-                if (killTargets.length > 0) {
-                    killTargetId = killTargets[0][0]; 
-                }
-            }
-
-            // 2. Protection (Doctor & Bodyguard)
-            const doctor = actions.find(p => p.role === 'Doctor');
-            const bodyguard = actions.find(p => p.role === 'Bodyguard');
-            
-            let savedTargetId = doctor ? doctor.actionTargetId : null;
-            let protectedTargetId = bodyguard ? bodyguard.actionTargetId : null;
-            let finalKilledByWolfId = killTargetId;
-            
-            let wolfKillMessage = '';
-            
-            if (killTargetId) {
-                if (killTargetId === savedTargetId) {
-                    finalKilledByWolfId = null; wolfKillMessage = `${gameState.players.find(p => p.id === killTargetId).name} đã được Bác Sĩ cứu! `;
-                } else if (killTargetId === protectedTargetId) {
-                    finalKilledByWolfId = null; wolfKillMessage = `${gameState.players.find(p => p.id === killTargetId).name} đã được Bảo Vệ! `;
-                }
-            }
-            
-            // 3. Witch Actions
-            const witch = actions.find(p => p.role === 'Witch');
-            let killedByWitchId = null;
-            let newWitchPotions = { ...gameState.witchPotions };
-
-            if (witch) {
-                const witchAction = actions.find(p => p.id === witch.id);
-                const actionType = witchAction ? witchAction.witchActionType : null;
-
-                if (actionType === 'Heal' && newWitchPotions.heal > 0) {
-                    if (finalKilledByWolfId === witchAction.actionTargetId) {
-                         finalKilledByWolfId = null;
-                         wolfKillMessage += `${gameState.players.find(p => p.id === witchAction.actionTargetId).name} được Phù Thủy cứu! `;
-                         newWitchPotions.heal -= 1;
-                    }
-                } else if (actionType === 'Kill' && newWitchPotions.kill > 0) {
-                    killedByWitchId = witchAction.actionTargetId;
-                    newWitchPotions.kill -= 1;
-                }
-            }
-
-            // 4. Seer Reveal (private system message)
-            const seerActor = actions.find(p => p.role === 'Seer');
-            if (seerActor) {
-                const target = gameState.players.find(p => p.id === seerActor.actionTargetId);
-                const revealMessage = `[GM -> ${seerActor.name}]: ${target.name} là ${ROLES_VN[target.role]}.`;
-                addMessage('Người Quản Trò (GM)', revealMessage, 'System_Private');
-            }
-
-
-            // 5. Determine Final Death and Hunter Effect
-            let finalKilledId = finalKilledByWolfId || killedByWitchId;
-            let nightMessage = wolfKillMessage;
-            let winCheckId = finalKilledId;
-
-            if (finalKilledId) {
-                const killedPlayer = gameState.players.find(p => p.id === finalKilledId);
-                
-                // Update player status
-                gameState.players = gameState.players.map(p => p.id === finalKilledId ? { ...p, status: 'Dead' } : p);
-                
-                const killSource = finalKilledByWolfId ? 'Ma Sói' : 'Phù Thủy';
-                nightMessage += `${killedPlayer.name} (${ROLES_VN[killedPlayer.role]}) đã chết vì bị ${killSource} tấn công.`;
-                
-                // Hunter Death Effect
-                if (killedPlayer.role === 'Hunter') {
-                    const hunter = killedPlayer;
-                    const aliveTargets = gameState.players.filter(p => p.status === 'Alive' && p.id !== hunter.id);
-                    if (aliveTargets.length > 0) {
-                        const hunterShotId = shuffleArray(aliveTargets)[0].id;
-                        const shotPlayer = gameState.players.find(p => p.id === hunterShotId);
-                        nightMessage += ` Thợ Săn ${hunter.name} đã kịp bắn ${shotPlayer.name} (${ROLES_VN[shotPlayer.role]}) trước khi chết.`;
-                        gameState.players.forEach(p => {
-                            if (p.id === hunterShotId) p.status = 'Dead';
-                        });
-                        winCheckId = hunterShotId; 
-                    }
-                }
-            } else {
-                if (!nightMessage.includes('cứu') && !nightMessage.includes('Bảo Vệ')) {
-                    nightMessage += 'Không ai bị giết đêm nay.';
-                }
-            }
-
-            // 6. Update Game State for next day
-            gameState.dayCount += 1;
-            gameState.phase = 'Discussion';
-            gameState.witchPotions = newWitchPotions;
-            gameState.bodyguardLastProtected = protectedTargetId;
-
-            // Reset player actions
-             gameState.players = gameState.players.map(p => ({ 
-                ...p, 
-                voteTargetId: null, 
-                actionTargetId: null,
-                witchActionType: null 
-            }));
-
-
-            addMessage('Người Quản Trò (GM)', nightMessage, 'GM');
-            checkWinCondition(winCheckId);
-            
-            if (gameState.phase !== 'GameOver') {
-                processGameLogic(); // Bắt đầu Giai đoạn Thảo luận mới
-            }
-            showLoading(false);
-        }
-        
-        function checkWinCondition(lastKilledId) {
-            const aliveWerewolves = gameState.players.filter(p => p.status === 'Alive' && p.role === 'Werewolf').length;
-            const aliveVillagers = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
-
-            let winner = null;
-            if (aliveWerewolves >= aliveVillagers) {
-                winner = 'Werewolves';
-            } else if (aliveWerewolves === 0) {
-                winner = 'Villagers';
-            }
-
-            if (winner) {
-                gameState.phase = 'GameOver';
-                gameState.winner = winner;
-                addMessage('Người Quản Trò (GM)', `TRÒ CHƠI KẾT THÚC! Phe ${winner} chiến thắng!`, 'GM');
-            }
-        }
-
-        function moveToNextPhase(nextPhase = null) {
-            if (isProcessingAI || gameState.phase === 'GameOver') return;
-            
-            if (!nextPhase) {
-                if (gameState.phase === 'Discussion') {
-                    nextPhase = 'Voting';
-                } else if (gameState.phase === 'Voting') {
-                    tallyVotes(); // Tự động chấm phiếu và chuyển sang đêm
-                    return; 
-                } else if (gameState.phase === 'Night') {
-                    executeNightActions(); // Tự động thực hiện hành động đêm và chuyển sang ngày
-                    return;
-                }
-            }
-            
-            if (nextPhase) {
-                 // Reset player actions only if moving to a new day/night cycle
-                 if (nextPhase === 'Night' || nextPhase === 'Discussion') {
-                     gameState.players = gameState.players.map(p => ({ 
-                        ...p, 
-                        voteTargetId: null, 
-                        actionTargetId: null,
-                        witchActionType: null 
-                    }));
-                }
-                if (nextPhase === 'Discussion') {
-                    gameState.dayCount += 1;
-                }
-
-                gameState.phase = nextPhase;
-                processGameLogic();
-            }
-        }
-        
-        // --- AI INTEGRATION (GEMINI) ---
-
-        async function generateAIResponse(bot, actionType) {
-            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
-            const otherAlivePlayers = alivePlayers.filter(p => p.id !== bot.id);
-            const alivePlayerNames = otherAlivePlayers.map(p => p.name).join(', ');
-            
-            let systemInstruction = "";
-            let userQuery = "";
-            let expectedJsonSchema = null;
-
-            const chatHistory = getChatHistory();
-            
-            const werewolfCount = gameState.players.filter(p => p.role === 'Werewolf' && p.status === 'Alive').length;
-            const villagerCount = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
-
-            const commonContext = `
-                Bạn là một người chơi Ma Sói thông minh, tên là ${bot.name} (${ROLES_VN[bot.role]}).
-                Bạn đang trong Ngày ${gameState.dayCount}. Số lượng phe Dân Làng (bao gồm vai trò) còn sống: ${villagerCount}. Số lượng Ma Sói còn sống: ${werewolfCount}.
-                Bạn phải cố gắng hết sức để bảo vệ phe của mình và chiến thắng.
-                Các người chơi còn sống là: ${alivePlayerNames}.
-                Lịch sử cuộc trò chuyện gần nhất:
-                ---
-                ${chatHistory}
-                ---
-                Vai trò và Hành động Ban Đêm:
-                - Werewolf (Ma Sói): Giết người (trừ bản thân).
-                - Seer (Tiên Tri): Soi vai người khác.
-                - Doctor (Bác Sĩ): Cứu người bị Ma Sói giết (không thể tự cứu).
-                - Witch (Phù Thủy): Có 1 bình Cứu và 1 bình Giết. (Đã dùng Cứu: ${1 - gameState.witchPotions.heal}, Đã dùng Giết: ${1 - gameState.witchPotions.kill}).
-                - Bodyguard (Bảo Vệ): Bảo vệ 1 người (không được bảo vệ người đã bảo vệ đêm trước, đêm trước là: ${gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai'}).
-            `;
-            
-            if (actionType === 'discussion') {
-                systemInstruction = commonContext + `
-                    Nhiệm vụ của bạn là đưa ra một lập luận sắc bén, thuyết phục để:
-                    - Nếu là Ma Sói: Gây nghi ngờ về một người vô tội hoặc bào chữa cho bản thân/đồng đội. Đừng bao giờ tiết lộ bạn là Ma Sói.
-                    - Nếu là Dân Làng: Đưa ra nhận định dựa trên logic và quan sát hành vi. Tiên Tri nên cẩn thận khi công khai thông tin.
-                    Luận điểm của bạn phải ngắn gọn (TỐI ĐA 2 CÂU), mạnh mẽ và bằng tiếng Việt.
-                `;
-                userQuery = `Ngày ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên nói gì để đóng góp vào cuộc tranh luận?`;
-
-            } else if (actionType === 'vote') {
-                systemInstruction = commonContext + `
-                    Nhiệm vụ của bạn là bỏ phiếu cho người chơi mà bạn tin rằng là Ma Sói.
-                    - Nếu là Ma Sói: Hãy bỏ phiếu cho một người vô tội bị nhiều người nghi ngờ nhất. KHÔNG bỏ phiếu cho đồng đội Ma Sói của bạn.
-                    - Nếu là Dân Làng: Bỏ phiếu cho người mà bạn nghi ngờ nhất dựa trên lập luận.
-                    Bạn PHẢI trả lời bằng một đối tượng JSON.
-                `;
-                userQuery = `Ngày ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên bỏ phiếu cho ai? Chỉ chọn một người từ danh sách còn sống.`;
-                expectedJsonSchema = {
-                    type: "OBJECT",
-                    properties: {
-                        voteTargetName: { type: "STRING", description: "Tên người chơi bạn muốn bỏ phiếu cho." },
-                        voteReason: { type: "STRING", description: "Lý do ngắn gọn (1 câu) cho sự lựa chọn bỏ phiếu." }
-                    }
-                };
-
-            } else if (actionType === 'night_action') {
-                 systemInstruction = commonContext + `
-                    Nhiệm vụ của bạn là thực hiện hành động ban đêm.
-                    - Werewolf: Chọn một người chơi (trừ mình) để giết.
-                    - Bodyguard: Không bảo vệ người đêm trước (${gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai'}).
-                    - Witch: Cố gắng dùng bình Cứu (nếu còn) để cứu nạn nhân đêm nay. Nếu không cần cứu, hãy dùng bình Giết (nếu còn) lên một người bạn nghi ngờ là Ma Sói.
-                    Bạn PHẢI trả lời bằng một đối tượng JSON.
-                `;
-                userQuery = `Đêm ${gameState.dayCount}. Tôi (${bot.name}, ${ROLES_VN[bot.role]}) nên thực hiện hành động ban đêm lên ai?
-                Nếu là Phù Thủy, hãy thêm trường 'potionType' vào JSON ('Heal' hoặc 'Kill').
-                `;
-                expectedJsonSchema = {
-                    type: "OBJECT",
-                    properties: {
-                        actionTargetName: { type: "STRING", description: "Tên người chơi là mục tiêu hành động ban đêm của bạn." },
-                        actionReason: { type: "STRING", description: "Lý do ngắn gọn (1 câu) cho hành động này." },
-                        potionType: { type: "STRING", description: "Chỉ cho Phù Thủy: 'Heal' hoặc 'Kill'." }
-                    }
-                };
-            }
-
+        // 3. Khởi tạo Camera
+        async function initCamera() {
+            const video = document.getElementById('webcam');
             try {
-                const fetchOptions = {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemInstruction }] },
-                        ...(expectedJsonSchema && { 
-                            generationConfig: {
-                                responseMimeType: "application/json",
-                                responseSchema: expectedJsonSchema
-                            }
-                        })
-                    })
-                };
-
-                const response = await fetch(API_URL + API_KEY, fetchOptions);
-                const result = await response.json();
-                const textResult = result.candidates?.[0]?.content?.parts?.[0]?.text || "Lỗi AI: Không nhận được phản hồi.";
-
-                if (actionType === 'discussion') {
-                    let shortText = textResult.split('. ').slice(0, 2).join('. ');
-                    if (textResult.split('. ').length > 2) shortText += '...';
-                    addMessage(bot.name, shortText, bot.role);
-                } else {
-                    try {
-                        const jsonResponse = JSON.parse(textResult);
-                        const targetName = jsonResponse.voteTargetName || jsonResponse.actionTargetName;
-                        const reason = jsonResponse.voteReason || jsonResponse.actionReason;
-                        const potionType = jsonResponse.potionType || null;
-                        const targetPlayer = gameState.players.find(p => p.name === targetName && p.status === 'Alive');
-                        
-                        if (targetPlayer) {
-                            if (actionType === 'vote') {
-                                updatePlayerAction(bot.id, targetPlayer.id, 'vote', null);
-                                addMessage(bot.name, `*Đã bỏ phiếu cho ${targetPlayer.name} (${reason})*`, 'System_Bot');
-                            } else if (actionType === 'night_action') {
-                                updatePlayerAction(bot.id, targetPlayer.id, 'night_action', potionType);
-                                let msg = `*Đã thực hiện hành động (${ROLES_VN[bot.role]}) lên ${targetPlayer.name}.`;
-                                if (potionType) msg += ` Potion: ${potionType}.`;
-                                msg += ` (${reason})*`;
-                                addMessage(bot.name, msg, 'System_Bot');
-                            }
-                        } else {
-                             addMessage(bot.name, `Lỗi AI: Đã chọn mục tiêu không tồn tại hoặc đã chết (${targetName}). Bỏ qua hành động.`, 'System_Bot_Error');
-                        }
-                    } catch (e) {
-                         addMessage(bot.name, `Lỗi Phân Tích JSON AI. Phản hồi: ${textResult}. Lỗi: ${e.message}`, 'System_Bot_Error');
-                    }
-                }
-
-            } catch (error) {
-                console.error(`Lỗi gọi Gemini cho ${bot.name} (${actionType}):`, error);
-                addMessage(bot.name, `Lỗi kết nối AI. Bỏ qua lượt.`, 'System_Bot_Error');
-            }
-        }
-        
-        // --- DATA MUTATION (NO FIRESTORE) ---
-        
-        function addMessage(senderName, text, role) {
-            gameState.messages.push({
-                senderName,
-                text,
-                role,
-                timestamp: Date.now()
-            });
-            renderChat();
-        }
-
-        function updatePlayerAction(playerId, targetId, actionType, witchActionType = null) {
-            const playerIndex = gameState.players.findIndex(p => p.id === playerId);
-            if (playerIndex !== -1) {
-                if (actionType === 'vote') {
-                    gameState.players[playerIndex].voteTargetId = targetId;
-                } else if (actionType === 'night_action') {
-                    gameState.players[playerIndex].actionTargetId = targetId;
-                    if (gameState.players[playerIndex].role === 'Witch') {
-                         gameState.players[playerIndex].witchActionType = witchActionType;
-                    }
-                }
-            }
-            renderGameUI(); // Re-render after state change
-        }
-
-        // --- UI RENDERING ---
-        
-        function renderRoleCard(player) {
-            const roleVN = ROLES_VN[player.role] || 'Ẩn Danh';
-            
-            const roleColor = player.role === 'Werewolf' ? 'bg-red-900 border-red-600' : 
-                              player.role === 'Seer' ? 'bg-indigo-900 border-indigo-600' :
-                              player.role === 'Doctor' ? 'bg-cyan-900 border-cyan-600' :
-                              player.role === 'Witch' ? 'bg-purple-900 border-purple-600' :
-                              player.role === 'Bodyguard' ? 'bg-amber-900 border-amber-600' :
-                              player.role === 'Hunter' ? 'bg-orange-900 border-orange-600' :
-                              'bg-green-900 border-green-600'; 
-            
-            let extraInfo = '';
-            if (player.role === 'Witch' && gameState.witchPotions) {
-                 extraInfo = `<p class="text-sm opacity-90 mt-1">Bình Cứu: ${gameState.witchPotions.heal} | Bình Giết: ${gameState.witchPotions.kill}</p>`;
-            } else if (player.role === 'Bodyguard') {
-                 const lastProtectedName = gameState.players.find(p => p.id === gameState.bodyguardLastProtected)?.name || 'Không ai';
-                 extraInfo = `<p class="text-sm opacity-90 mt-1">Đêm trước bảo vệ: ${lastProtectedName}</p>`;
-            }
-
-            return `
-                <div class="p-4 rounded-xl shadow-2xl ${roleColor} text-white font-bold transform transition-transform border-b-4 border-r-4">
-                    <p class="text-xl">${player.name}</p>
-                    <p class="text-sm opacity-90">${roleVN}</p>
-                    ${extraInfo}
-                </div>
-            `;
-        }
-
-        function renderPlayerList() {
-            const container = document.getElementById('player-list');
-            container.innerHTML = '';
-            
-            if (!gameState.players) return;
-
-            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
-            
-            gameState.players.forEach(player => {
-                const isAlive = player.status === 'Alive';
-                const isTargetable = isAlive && player.id !== HUMAN_PLAYER_ID;
-                
-                let targetButtons = '';
-                const baseClass = "mt-1 w-full text-white py-2 rounded-lg transition-colors font-semibold shadow-md";
-
-                if (gameState.phase === 'Voting' && isTargetable && humanPlayer.status === 'Alive') {
-                    targetButtons = `<button onclick="handleActionClick('${player.id}', 'vote')" class="bg-amber-600 hover:bg-amber-700 ${baseClass}">Bỏ Phiếu</button>`;
-                } else if (gameState.phase === 'Night' && isTargetable && humanPlayer.status === 'Alive') {
-                    
-                    if (NIGHT_ACTORS.includes(humanPlayer.role)) {
-                         if (humanPlayer.role === 'Witch') {
-                            if (gameState.witchPotions.heal > 0) {
-                                targetButtons += `<button onclick="handleActionClick('${player.id}', 'night_action_heal')" class="bg-cyan-600 hover:bg-cyan-700 ${baseClass}">Cứu (🧪)</button>`;
-                            }
-                            if (gameState.witchPotions.kill > 0) {
-                                targetButtons += `<button onclick="handleActionClick('${player.id}', 'night_action_kill')" class="bg-red-700 hover:bg-red-800 ${baseClass}">Giết (🔪)</button>`;
-                            }
-                         } else if (humanPlayer.role === 'Werewolf') {
-                            if (player.id !== HUMAN_PLAYER_ID) {
-                                targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_wolf')" class="bg-red-700 hover:bg-red-800 ${baseClass}">Giết (🐺)</button>`;
-                            }
-                         } else if (humanPlayer.role === 'Bodyguard') {
-                            if (player.id !== gameState.bodyguardLastProtected) { 
-                                targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_guard')" class="bg-indigo-600 hover:bg-indigo-700 ${baseClass}">Bảo Vệ (🛡️)</button>`;
-                            } else {
-                                targetButtons = `<button disabled class="bg-gray-600 opacity-60 ${baseClass}">Vừa Bảo Vệ</button>`;
-                            }
-                         } else { // Seer, Doctor
-                             targetButtons = `<button onclick="handleActionClick('${player.id}', 'night_action_generic')" class="bg-blue-600 hover:bg-blue-700 ${baseClass}">Hành Động</button>`;
-                         }
-                    }
-                }
-                
-                const currentVotes = gameState.players.filter(p => p.voteTargetId === player.id).length;
-                const card = `
-                    <div class="p-3 bg-gray-800 rounded-xl shadow-lg transition-all hover:shadow-xl ${isAlive ? 'border border-green-500/50' : 'border border-red-500/50 opacity-60'}">
-                        <p class="text-white font-bold text-lg">${player.name} ${player.id === HUMAN_PLAYER_ID ? '(Bạn)' : ''}</p>
-                        <p class="text-sm ${isAlive ? 'text-green-400' : 'text-red-400'}">${isAlive ? 'Còn Sống' : 'Đã Chết'}</p>
-                        ${isAlive ? `<p class="text-xs text-blue-300 mt-1">Phiếu đã bầu: ${currentVotes}</p>` : ''}
-                        <div class="mt-2 space-y-1">${targetButtons}</div>
-                    </div>
-                `;
-                container.innerHTML += card;
-            });
-        }
-        
-        function renderChat() {
-            const chatBox = document.getElementById('chat-messages');
-            chatBox.innerHTML = '';
-            
-            if (!gameState.messages) return;
-
-            gameState.messages.forEach(msg => {
-                const isBot = msg.senderName !== 'Bạn (Human)' && msg.senderName !== 'Người Quản Trò (GM)';
-                const isGM = msg.role === 'GM';
-                const isSystem = msg.role && msg.role.startsWith('System');
-
-                let senderClass = 'font-bold text-amber-400';
-                let messageClass = 'bg-gray-700 text-gray-100';
-
-                if (isGM) {
-                    senderClass = 'font-black text-red-500';
-                    messageClass = 'bg-gray-800 text-red-300 italic border border-red-900';
-                } else if (isBot) {
-                    senderClass = 'font-bold text-blue-400';
-                    messageClass = 'bg-gray-700 text-gray-100';
-                } else if (isSystem) {
-                    senderClass = 'font-bold text-purple-400';
-                    messageClass = 'bg-gray-900 text-purple-300 text-xs border border-purple-900';
-                }
-                
-                const html = `
-                    <div class="mb-2">
-                        <span class="${senderClass}">${msg.senderName}</span>: 
-                        <span class="${messageClass} px-2 py-1 rounded-lg inline-block break-words shadow-inner">${msg.text}</span>
-                    </div>
-                `;
-                chatBox.innerHTML += html;
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function renderVoteTally() {
-            const tallyBoard = document.getElementById('tally-results');
-            const tallyBoardContainer = document.getElementById('vote-tally-board');
-            tallyBoard.innerHTML = '';
-            
-            if (gameState.phase !== 'Voting') {
-                tallyBoardContainer.classList.add('hidden');
-                return;
-            }
-            
-            tallyBoardContainer.classList.remove('hidden');
-
-            const alivePlayers = gameState.players.filter(p => p.status === 'Alive');
-            const totalVoters = alivePlayers.length;
-            const voteCounts = {};
-            
-            for (const player of alivePlayers) {
-                if (player.voteTargetId) {
-                    voteCounts[player.voteTargetId] = (voteCounts[player.voteTargetId] || 0) + 1;
-                }
-            }
-
-            const tallyList = [];
-            for (const targetId in voteCounts) {
-                const targetPlayer = gameState.players.find(p => p.id === targetId);
-                if (targetPlayer) {
-                    tallyList.push({ name: targetPlayer.name, votes: voteCounts[targetId] });
-                }
-            }
-            
-            tallyList.sort((a, b) => b.votes - a.votes);
-            
-            if (tallyList.length === 0) {
-                tallyBoard.innerHTML = '<p class="text-gray-400 italic">Chưa có phiếu bầu nào.</p>';
-                return;
-            }
-            
-            const maxVotes = tallyList[0].votes;
-
-            tallyList.forEach(item => {
-                const percentage = (item.votes / totalVoters) * 100;
-                const barColor = item.votes === maxVotes ? 'bg-red-600' : 'bg-amber-500';
-
-                const tallyItem = `
-                    <div class="text-white">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="font-semibold">${item.name}</span>
-                            <span class="font-bold">${item.votes} phiếu</span>
-                        </div>
-                        <div class="w-full bg-gray-600 rounded-full h-2.5">
-                            <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
-                        </div>
-                    </div>
-                `;
-                tallyBoard.innerHTML += tallyItem;
-            });
-        }
-
-
-        function renderGameUI() {
-            if (!gameState.players) return;
-            
-            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
-            const aliveWerewolves = gameState.players.filter(p => p.status === 'Alive' && p.role === 'Werewolf').length;
-            const aliveVillagers = gameState.players.filter(p => p.status === 'Alive' && ['Villager', 'Seer', 'Doctor', 'Witch', 'Bodyguard', 'Hunter'].includes(p.role)).length;
-
-            if (humanPlayer) {
-                document.getElementById('role-card-container').innerHTML = renderRoleCard(humanPlayer);
-            }
-            
-            const phaseText = gameState.phase === 'Night' ? 'ĐÊM THAO TÚNG 🌑' : 
-                              gameState.phase === 'Discussion' ? 'NGÀY TRANH LUẬN ☀️' : 
-                              gameState.phase === 'Voting' ? 'BỎ PHIẾU TREO CỔ 🔪' : 
-                              `KẾT THÚC 🏁 (Phe ${gameState.winner === 'Werewolves' ? 'MA SÓI' : 'DÂN LÀNG'} thắng)`;
-            
-            document.getElementById('game-status').innerHTML = `
-                <p class="text-3xl font-extrabold text-white mb-2">
-                    ${phaseText}
-                </p>
-                <p class="text-xl font-bold text-amber-300">Ngày ${gameState.dayCount}</p>
-                <p class="text-sm text-gray-400">Dân Làng: ${aliveVillagers} | Ma Sói: ${aliveWerewolves}</p>
-            `;
-
-            renderPlayerList();
-            renderVoteTally(); 
-            lucide.createIcons(); // Re-render icons after DOM update
-
-            const chatInput = document.getElementById('chat-input');
-            const sendBtn = document.getElementById('send-message-btn');
-            const nextPhaseBtn = document.getElementById('next-phase-btn');
-            
-            const canSpeak = gameState.phase === 'Discussion' && humanPlayer && humanPlayer.status === 'Alive';
-            const canNextPhase = gameState.phase !== 'GameOver' && !isProcessingAI;
-
-            chatInput.disabled = !canSpeak;
-            sendBtn.disabled = !canSpeak;
-            nextPhaseBtn.disabled = !canNextPhase;
-            
-            if (gameState.phase === 'GameOver') {
-                nextPhaseBtn.disabled = true;
-                nextPhaseBtn.textContent = 'Game Over';
-            } else {
-                 nextPhaseBtn.textContent = 'Bỏ Qua';
-            }
-            
-            if (!canSpeak) {
-                 chatInput.placeholder = (gameState.phase === 'Night') ? "Ban đêm, không được nói." : "Đã chết hoặc không trong giai đoạn nói chuyện.";
-            } else {
-                 chatInput.placeholder = "Viết lập luận của bạn...";
-            }
-        }
-        
-        // --- HANDLERS TƯƠNG TÁC NGƯỜI CHƠI ---
-
-        function handleSendMessage() {
-            const chatInput = document.getElementById('chat-input');
-            const message = chatInput.value.trim();
-            if (message && gameState.phase === 'Discussion' && gameState.players.find(p => p.id === HUMAN_PLAYER_ID).status === 'Alive') {
-                addMessage("Bạn (Human)", message, gameState.players.find(p => p.id === HUMAN_PLAYER_ID).role);
-                chatInput.value = '';
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" },
+                    audio: false 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                alert("Bạn cần cấp quyền Camera để sử dụng tính năng quét đề!");
             }
         }
 
-        function handleActionClick(targetId, actionType) {
-            const humanPlayer = gameState.players.find(p => p.id === HUMAN_PLAYER_ID);
-            if (!humanPlayer || humanPlayer.status === 'Dead' || isProcessingAI) return;
-            
-            const targetPlayer = gameState.players.find(p => p.id === targetId);
-            if (!targetPlayer || targetPlayer.status === 'Dead') return;
-
-            if (actionType === 'vote' && gameState.phase === 'Voting') {
-                 updatePlayerAction(HUMAN_PLAYER_ID, targetId, 'vote', null);
-                 addMessage("Bạn (Human)", `*Đã bỏ phiếu cho ${targetPlayer.name}*`, 'System_Human');
-
-            } else if (actionType.startsWith('night_action') && gameState.phase === 'Night') {
-                let witchActionType = null;
-                
-                if (humanPlayer.role === 'Werewolf' && targetId === HUMAN_PLAYER_ID) {
-                    addMessage('Người Quản Trò (GM)', 'Ma Sói không thể giết chính mình!', 'System_Error');
-                    return;
-                }
-
-                if (humanPlayer.role === 'Bodyguard' && targetId === gameState.bodyguardLastProtected) {
-                    addMessage('Người Quản Trò (GM)', 'Bảo vệ không được bảo vệ người đêm trước!', 'System_Error');
-                    return;
-                }
-                
-                if (humanPlayer.role === 'Witch') {
-                    if (actionType.includes('heal')) {
-                        if (gameState.witchPotions.heal <= 0) return;
-                        witchActionType = 'Heal';
-                    } else if (actionType.includes('kill')) {
-                        if (gameState.witchPotions.kill <= 0) return;
-                        witchActionType = 'Kill';
-                    } else return;
-                }
-
-                updatePlayerAction(HUMAN_PLAYER_ID, targetId, 'night_action', witchActionType);
-                let msg = `*Đã thực hiện hành động đêm (${ROLES_VN[humanPlayer.role]}).`;
-                if (witchActionType) msg += ` Potion: ${witchActionType}.`;
-                msg += ` Mục tiêu: ${targetPlayer.name}*`;
-                addMessage("Bạn (Human)", msg, 'System_Human');
-            }
+        // 4. Hiệu ứng xóa đáp án
+        let isMagicOn = false;
+        function toggleMagic() {
+            const video = document.getElementById('webcam');
+            isMagicOn = !isMagicOn;
+            video.style.filter = isMagicOn 
+                ? "contrast(200%) brightness(140%) grayscale(100%)" 
+                : "none";
         }
 
-        window.onload = () => {
-             // Khởi tạo trạng thái ban đầu để giao diện không bị lỗi
-             gameState = { phase: 'Starting', dayCount: 0, players: null, messages: [], witchPotions: { heal: 1, kill: 1 }, bodyguardLastProtected: null, winner: null };
-             renderGameUI();
-        };
-        window.startGameOffline = startGameOffline;
-        window.handleSendMessage = handleSendMessage;
-        window.handleActionClick = handleActionClick;
-        window.moveToNextPhase = moveToNextPhase;
+        // Tự động chọn 1 hình nền ngẫu nhiên khi mở app
+        window.onload = changeBackground;
     </script>
 </body>
-</html> 
+</html>
