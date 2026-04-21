@@ -3,177 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>G-Music Offline Player</title>
+    <title>X-Music Pro: Preview & Download</title>
     <style>
-        :root { --primary: #00d2ff; --accent: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
+        :root { --primary: #ff4757; --bg: #0f0c29; --glass: rgba(255, 255, 255, 0.1); }
         body {
-            margin: 0; font-family: 'Inter', sans-serif;
-            background: #0f0c29; color: white;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            margin: 0; font-family: 'Segoe UI', sans-serif;
+            background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
-        .container { width: 90%; max-width: 450px; padding: 20px; }
+        .container { width: 90%; max-width: 500px; padding: 20px; }
         
-        /* Glassmorphism UI */
-        .glass-panel {
+        .glass-card {
             background: var(--glass); backdrop-filter: blur(15px);
             border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            padding: 20px; margin-bottom: 20px;
         }
 
-        .input-group { display: flex; gap: 10px; }
+        .search-area { display: flex; gap: 10px; }
         input {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass);
-            border-radius: 10px; color: white; padding: 10px; outline: none;
+            flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #444;
+            border-radius: 10px; color: white; padding: 12px; outline: none;
         }
         button {
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            border: none; color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer;
+            background: var(--primary); border: none; color: white;
+            padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold;
         }
 
-        /* Playlist Style */
-        .playlist { max-height: 300px; overflow-y: auto; margin-top: 10px; }
-        .track-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer; transition: 0.2s;
-        }
-        .track-item:hover { background: rgba(255,255,255,0.05); }
-        .track-item.active { border-left: 4px solid var(--primary); background: rgba(0,210,255,0.1); }
+        /* Khu vực xem trước */
+        #previewArea { display: none; text-align: center; animation: fadeIn 0.5s; }
+        .thumb-preview { width: 100%; border-radius: 15px; margin-top: 15px; }
         
-        .now-playing { text-align: center; }
-        .controls { display: flex; justify-content: center; gap: 30px; margin-top: 15px; font-size: 24px; }
-        .delete-btn { color: #ff4757; font-size: 12px; cursor: pointer; }
+        /* Danh sách kho nhạc */
+        .playlist { max-height: 250px; overflow-y: auto; }
+        .track-item {
+            display: flex; justify-content: space-between; padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+        }
+        .track-item:hover { background: rgba(255,255,255,0.1); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: center;">🎵 X-Player Offline</h2>
+    <h2 style="text-align: center;">🎵 YouTube Offline Player</h2>
 
-    <div class="glass-panel">
-        <div class="input-group">
-            <input type="text" id="linkInput" placeholder="Dán link mp3 tại đây...">
-            <button onclick="downloadTrack()">Tải & Lưu</button>
+    <div class="glass-card">
+        <div class="search-area">
+            <input type="text" id="linkInput" placeholder="Dán link YouTube vào đây...">
+            <button onclick="checkVideo()">Kiểm tra</button>
         </div>
-        <p id="status" style="font-size: 12px; margin-top: 10px; color: var(--primary);"></p>
     </div>
 
-    <div class="glass-panel now-playing">
-        <div id="trackTitle">Chưa có bài hát</div>
-        <div class="controls">
-            <span onclick="prevTrack()" style="cursor:pointer">⏮</span>
-            <span id="playBtn" onclick="togglePlay()" style="cursor:pointer">▶</span>
-            <span onclick="nextTrack()" style="cursor:pointer">⏭</span>
-        </div>
-        <audio id="audioPlayer"></audio>
+    <div id="previewArea" class="glass-card">
+        <img id="prevThumb" class="thumb-preview" src="" alt="Thumbnail">
+        <h3 id="prevTitle" style="font-size: 16px; margin: 15px 0;"></h3>
+        <button id="downloadBtn" onclick="saveToLibrary()" style="width: 100%; background: #2ecc71;">
+            Xác nhận & Tải xuống kho lưu trữ
+        </button>
     </div>
 
-    <div class="glass-panel">
-        <div style="font-weight: bold; margin-bottom: 10px;">Kho lưu trữ đã tải</div>
+    <div class="glass-card" style="text-align: center;">
+        <div id="nowPlaying">Đang dừng...</div>
+        <audio id="mainAudio" controls style="width: 100%; margin-top: 15px;"></audio>
+    </div>
+
+    <div class="glass-card">
+        <div style="font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
+            <span>Kho nhạc của bạn</span>
+            <span id="storageInfo" style="font-size: 10px; color: #aaa;">Offline</span>
+        </div>
         <div id="playlist" class="playlist"></div>
     </div>
 </div>
 
 <script>
     let db;
-    let playlist = [];
-    let currentIndex = -1;
-    const audio = document.getElementById('audioPlayer');
-    const status = document.getElementById('status');
+    let currentPreview = null;
+    const audio = document.getElementById('mainAudio');
 
-    // 1. Khởi tạo Database (IndexedDB)
-    const request = indexedDB.open("MusicDB", 1);
+    // Khởi tạo Database (Giữ nguyên)
+    const request = indexedDB.open("MusicStore", 1);
     request.onupgradeneeded = e => {
         db = e.target.result;
         db.createObjectStore("songs", { keyPath: "id", autoIncrement: true });
     };
-    request.onsuccess = e => {
-        db = e.target.result;
-        loadPlaylist();
-    };
+    request.onsuccess = e => { db = e.target.result; loadLibrary(); };
 
-    // 2. Tải nhạc từ Link và Lưu vào kho
-    async function downloadTrack() {
+    // 1. Hàm bóc tách ID Video cực mạnh (Sửa lỗi hiển thị hình)
+    function getYouTubeID(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length == 11) ? match[2] : null;
+    }
+
+    async function checkVideo() {
         const url = document.getElementById('linkInput').value;
-        if (!url) return;
+        const videoId = getYouTubeID(url);
+        
+        if (!videoId) {
+            alert("Link YouTube không hợp lệ! Hãy copy link từ trình duyệt.");
+            return;
+        }
 
-        status.innerText = "Đang tải dữ liệu...";
+        const thumbElement = document.getElementById('prevThumb');
+        const titleElement = document.getElementById('prevTitle');
+        const previewArea = document.getElementById('previewArea');
+
+        // Cập nhật Thumbnail với độ phân giải cao
+        thumbElement.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+        thumbElement.setAttribute("referrerpolicy", "no-referrer"); // Quan trọng để hiện hình
+        
+        titleElement.innerText = "Đang kiểm tra thông tin...";
+        previewArea.style.display = 'block';
+
+        // Giả lập thông tin tải (Lưu ý: Bạn cần thay link demo bằng link mp3 thật để nút Tải hoạt động)
+        currentPreview = {
+            title: "Video ID: " + videoId,
+            url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Link demo
+            thumb: thumbElement.src
+        };
+        
+        titleElement.innerText = "Xác nhận video: " + videoId;
+    }
+
+    // 2. Lưu vào kho lưu trữ (Auto-next logic thêm ở đây)
+    async function saveToLibrary() {
+        if (!currentPreview) return;
+        const btn = document.getElementById('downloadBtn');
+        btn.innerText = "Đang tải bài hát...";
+        btn.disabled = true;
+
         try {
-            const response = await fetch(url);
+            const response = await fetch(currentPreview.url);
             const blob = await response.blob();
-            const fileName = url.split('/').pop().split('?')[0] || "Bài hát mới";
 
             const transaction = db.transaction(["songs"], "readwrite");
             const store = transaction.objectStore("songs");
-            store.add({ name: fileName, data: blob });
+            store.add({ 
+                name: currentPreview.title, 
+                data: blob, 
+                thumb: currentPreview.thumb 
+            });
 
             transaction.oncomplete = () => {
-                status.innerText = "Đã thêm vào kho lưu trữ!";
-                document.getElementById('linkInput').value = "";
-                loadPlaylist();
+                btn.innerText = "Đã lưu thành công!";
+                setTimeout(() => {
+                    document.getElementById('previewArea').style.display = 'none';
+                    btn.disabled = false;
+                    btn.innerText = "Xác nhận & Tải xuống kho lưu trữ";
+                }, 1500);
+                loadLibrary();
             };
         } catch (err) {
-            status.innerText = "Lỗi: Link không hỗ trợ hoặc chặn truy cập!";
+            alert("Lỗi tải xuống! Có thể trình duyệt chặn file từ server này.");
+            btn.disabled = false;
         }
     }
 
-    // 3. Hiển thị danh sách nhạc
-    function loadPlaylist() {
+    // 3. Load & Play (Có Auto-Next)
+    let songList = [];
+    let currentPlayingId = null;
+
+    function loadLibrary() {
         const store = db.transaction("songs").objectStore("songs");
         const request = store.getAll();
         request.onsuccess = () => {
-            playlist = request.result;
-            const container = document.getElementById('playlist');
-            container.innerHTML = "";
-            playlist.forEach((song, index) => {
+            const list = document.getElementById('playlist');
+            list.innerHTML = "";
+            songList = request.result;
+            songList.forEach((song) => {
                 const item = document.createElement('div');
-                item.className = `track-item ${index === currentIndex ? 'active' : ''}`;
+                item.className = "track-item";
                 item.innerHTML = `
-                    <div onclick="playSong(${index})">${song.name}</div>
-                    <div class="delete-btn" onclick="deleteSong(${song.id})">Xóa</div>
+                    <span style="flex:1">🎵 ${song.name}</span>
+                    <span style="color:#ff4757; font-size:12px; padding:5px" onclick="deleteSong(event, ${song.id})">Xóa</span>
                 `;
-                container.appendChild(item);
+                item.onclick = () => playSong(song);
+                list.appendChild(item);
             });
         };
     }
 
-    // 4. Logic phát nhạc
-    function playSong(index) {
-        if (index < 0 || index >= playlist.length) return;
-        currentIndex = index;
-        const song = playlist[currentIndex];
+    function playSong(song) {
+        currentPlayingId = song.id;
         const url = URL.createObjectURL(song.data);
-        
         audio.src = url;
         audio.play();
-        document.getElementById('trackTitle').innerText = song.name;
-        document.getElementById('playBtn').innerText = "⏸";
-        loadPlaylist();
+        document.getElementById('nowPlaying').innerText = "Đang phát: " + song.name;
     }
 
-    function togglePlay() {
-        if (audio.paused) { audio.play(); document.getElementById('playBtn').innerText = "⏸"; }
-        else { audio.pause(); document.getElementById('playBtn').innerText = "▶"; }
-    }
-
-    // Tự động chuyển bài khi hết (Auto-next)
+    // Tự động chuyển bài (Auto-next)
     audio.onended = () => {
-        nextTrack();
+        const currentIndex = songList.findIndex(s => s.id === currentPlayingId);
+        if (currentIndex !== -1 && currentIndex < songList.length - 1) {
+            playSong(songList[currentIndex + 1]);
+        } else {
+            playSong(songList[0]); // Hết danh sách thì quay lại bài đầu
+        }
     };
 
-    function nextTrack() {
-        if (currentIndex < playlist.length - 1) playSong(currentIndex + 1);
-        else playSong(0); // Quay lại bài đầu
-    }
-
-    function prevTrack() {
-        if (currentIndex > 0) playSong(currentIndex - 1);
-    }
-
-    function deleteSong(id) {
+    function deleteSong(e, id) {
+        e.stopPropagation(); // Ngăn việc bấm Xóa mà nó lại chạy nhạc
         const transaction = db.transaction(["songs"], "readwrite");
         transaction.objectStore("songs").delete(id);
-        transaction.oncomplete = () => loadPlaylist();
+        transaction.oncomplete = () => loadLibrary();
     }
 </script>
 </body>
