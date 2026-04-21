@@ -1,0 +1,15 @@
+{
+  "name": "X-Music Offline",
+  "short_name": "XMusic",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1e272e",
+  "theme_color": "#ff4757",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3844/3844724.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

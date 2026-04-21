@@ -2,220 +2,179 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ứng dụng Đa năng Học tập</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-Music Offline Player</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        :root { --primary: #00d2ff; --accent: #3a7bd5; --glass: rgba(255, 255, 255, 0.1); }
         body {
-            margin: 0;
-            padding: 15px;
-            font-family: 'Inter', -apple-system, system-ui, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #2d3436;
-            /* Hình nền mặc định và thiết lập background */
-            background: #2c3e50 url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=2073&auto=format&fit=crop') no-repeat center center fixed;
-            background-size: cover;
-            transition: background 0.8s ease-in-out;
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: #0f0c29; color: white;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .container { width: 90%; max-width: 450px; padding: 20px; }
+        
+        /* Glassmorphism UI */
+        .glass-panel {
+            background: var(--glass); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
-        /* Lớp phủ mờ để nội dung dễ đọc trên mọi hình nền */
-        .overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            z-index: -1;
+        .input-group { display: flex; gap: 10px; }
+        input {
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass);
+            border-radius: 10px; color: white; padding: 10px; outline: none;
+        }
+        button {
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border: none; color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer;
         }
 
-        .container {
-            width: 100%;
-            max-width: 450px;
-            z-index: 1;
+        /* Playlist Style */
+        .playlist { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        .track-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer; transition: 0.2s;
         }
-
-        /* Nút đổi hình nền nhanh */
-        .bg-switcher {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: rgba(255, 255, 255, 0.8);
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        h2 {
-            text-align: center;
-            font-size: 1.5rem;
-            margin: 20px 0;
-            font-weight: 800;
-            color: #fff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* Thẻ Glassmorphism cho các ô màu */
-        .color-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .color-card {
-            aspect-ratio: 1 / 1;
-            border-radius: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid rgba(255,255,255,0.4);
-        }
-
-        .color-card:active { transform: scale(0.9); }
-
-        .green { background: linear-gradient(135deg, #00b894, #55efc4); }
-        .yellow { background: linear-gradient(135deg, #fdcb6e, #ffeaa7); color: #636e72; }
-        .red { background: linear-gradient(135deg, #d63031, #ff7675); }
-        .blue { background: linear-gradient(135deg, #0984e3, #74b9ff); }
-
-        /* Camera Box - Phong cách kính mờ cực đẹp */
-        .camera-box {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 30px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
-
-        .camera-box h2 { color: #2d3436; text-shadow: none; margin-top: 0; }
-
-        .video-wrapper {
-            width: 100%;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #000;
-            aspect-ratio: 4 / 3;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        video { width: 100%; height: 100%; object-fit: cover; }
-
-        .controls {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 16px;
-            border: none;
-            border-radius: 15px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .btn-primary { background: #2d3436; color: white; }
-        .btn-secondary { background: #ffffff; color: #2d3436; }
-        .btn:active { transform: translateY(2px); box-shadow: none; }
-
+        .track-item:hover { background: rgba(255,255,255,0.05); }
+        .track-item.active { border-left: 4px solid var(--primary); background: rgba(0,210,255,0.1); }
+        
+        .now-playing { text-align: center; }
+        .controls { display: flex; justify-content: center; gap: 30px; margin-top: 15px; font-size: 24px; }
+        .delete-btn { color: #ff4757; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="overlay"></div>
-    
-    <button class="bg-switcher" onclick="changeBackground()" title="Đổi hình nền">🖼️</button>
+<div class="container">
+    <h2 style="text-align: center;">🎵 X-Player Offline</h2>
 
-    <div class="container">
-        <h2>Học Tập Thông Minh</h2>
-        
-        <div class="color-grid">
-            <div class="color-card green" onclick="speak('A', '')">A</div>
-            <div class="color-card yellow" onclick="speak('B', '')">B</div>
-            <div class="color-card red" onclick="speak('C', '')">C</div>
-            <div class="color-card blue" onclick="speak('D', '')">D</div>
+    <div class="glass-panel">
+        <div class="input-group">
+            <input type="text" id="linkInput" placeholder="Dán link mp3 tại đây...">
+            <button onclick="downloadTrack()">Tải & Lưu</button>
         </div>
-
-        <div class="camera-box">
-            <h2>Quét Đề Cương</h2>
-            <div class="video-wrapper">
-                <video id="webcam" autoplay playsinline></video>
-            </div>
-            <div class="controls">
-                <button class="btn btn-secondary" onclick="initCamera()">📸 Mở Camera</button>
-                <button class="btn btn-primary" onclick="toggleMagic()">✨ Xóa Đáp Án</button>
-            </div>
-        </div>
+        <p id="status" style="font-size: 12px; margin-top: 10px; color: var(--primary);"></p>
     </div>
 
-    <script>
-        // 1. Đổi hình nền ngẫu nhiên từ Unsplash
-        function changeBackground() {
-            const keywords = ['study', 'library', 'workspace', 'nature', 'abstract', 'minimal'];
-            const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
-            // Thêm timestamp để trình duyệt không load lại ảnh cũ
-            const imageUrl = `https://source.unsplash.com/featured/1080x1920/?${randomKeyword}&t=${new Date().getTime()}`;
-            document.body.style.backgroundImage = `url('${imageUrl}')`;
-        }
+    <div class="glass-panel now-playing">
+        <div id="trackTitle">Chưa có bài hát</div>
+        <div class="controls">
+            <span onclick="prevTrack()" style="cursor:pointer">⏮</span>
+            <span id="playBtn" onclick="togglePlay()" style="cursor:pointer">▶</span>
+            <span onclick="nextTrack()" style="cursor:pointer">⏭</span>
+        </div>
+        <audio id="audioPlayer"></audio>
+    </div>
 
-        // 2. Tính năng đọc tên
-        function speak(label, colorName) {
-            window.speechSynthesis.cancel();
-            const msg = new SpeechSynthesisUtterance(`${label}. ${colorName}`);
-            msg.lang = 'vi-VN';
-            msg.rate = 1;
-            window.speechSynthesis.speak(msg);
-        }
+    <div class="glass-panel">
+        <div style="font-weight: bold; margin-bottom: 10px;">Kho lưu trữ đã tải</div>
+        <div id="playlist" class="playlist"></div>
+    </div>
+</div>
 
-        // 3. Khởi tạo Camera
-        async function initCamera() {
-            const video = document.getElementById('webcam');
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" },
-                    audio: false 
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                alert("Bạn cần cấp quyền Camera để sử dụng tính năng quét đề!");
-            }
-        }
+<script>
+    let db;
+    let playlist = [];
+    let currentIndex = -1;
+    const audio = document.getElementById('audioPlayer');
+    const status = document.getElementById('status');
 
-        // 4. Hiệu ứng xóa đáp án
-        let isMagicOn = false;
-        function toggleMagic() {
-            const video = document.getElementById('webcam');
-            isMagicOn = !isMagicOn;
-            video.style.filter = isMagicOn 
-                ? "contrast(200%) brightness(140%) grayscale(100%)" 
-                : "none";
-        }
+    // 1. Khởi tạo Database (IndexedDB)
+    const request = indexedDB.open("MusicDB", 1);
+    request.onupgradeneeded = e => {
+        db = e.target.result;
+        db.createObjectStore("songs", { keyPath: "id", autoIncrement: true });
+    };
+    request.onsuccess = e => {
+        db = e.target.result;
+        loadPlaylist();
+    };
 
-        // Tự động chọn 1 hình nền ngẫu nhiên khi mở app
-        window.onload = changeBackground;
-    </script>
+    // 2. Tải nhạc từ Link và Lưu vào kho
+    async function downloadTrack() {
+        const url = document.getElementById('linkInput').value;
+        if (!url) return;
+
+        status.innerText = "Đang tải dữ liệu...";
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const fileName = url.split('/').pop().split('?')[0] || "Bài hát mới";
+
+            const transaction = db.transaction(["songs"], "readwrite");
+            const store = transaction.objectStore("songs");
+            store.add({ name: fileName, data: blob });
+
+            transaction.oncomplete = () => {
+                status.innerText = "Đã thêm vào kho lưu trữ!";
+                document.getElementById('linkInput').value = "";
+                loadPlaylist();
+            };
+        } catch (err) {
+            status.innerText = "Lỗi: Link không hỗ trợ hoặc chặn truy cập!";
+        }
+    }
+
+    // 3. Hiển thị danh sách nhạc
+    function loadPlaylist() {
+        const store = db.transaction("songs").objectStore("songs");
+        const request = store.getAll();
+        request.onsuccess = () => {
+            playlist = request.result;
+            const container = document.getElementById('playlist');
+            container.innerHTML = "";
+            playlist.forEach((song, index) => {
+                const item = document.createElement('div');
+                item.className = `track-item ${index === currentIndex ? 'active' : ''}`;
+                item.innerHTML = `
+                    <div onclick="playSong(${index})">${song.name}</div>
+                    <div class="delete-btn" onclick="deleteSong(${song.id})">Xóa</div>
+                `;
+                container.appendChild(item);
+            });
+        };
+    }
+
+    // 4. Logic phát nhạc
+    function playSong(index) {
+        if (index < 0 || index >= playlist.length) return;
+        currentIndex = index;
+        const song = playlist[currentIndex];
+        const url = URL.createObjectURL(song.data);
+        
+        audio.src = url;
+        audio.play();
+        document.getElementById('trackTitle').innerText = song.name;
+        document.getElementById('playBtn').innerText = "⏸";
+        loadPlaylist();
+    }
+
+    function togglePlay() {
+        if (audio.paused) { audio.play(); document.getElementById('playBtn').innerText = "⏸"; }
+        else { audio.pause(); document.getElementById('playBtn').innerText = "▶"; }
+    }
+
+    // Tự động chuyển bài khi hết (Auto-next)
+    audio.onended = () => {
+        nextTrack();
+    };
+
+    function nextTrack() {
+        if (currentIndex < playlist.length - 1) playSong(currentIndex + 1);
+        else playSong(0); // Quay lại bài đầu
+    }
+
+    function prevTrack() {
+        if (currentIndex > 0) playSong(currentIndex - 1);
+    }
+
+    function deleteSong(id) {
+        const transaction = db.transaction(["songs"], "readwrite");
+        transaction.objectStore("songs").delete(id);
+        transaction.oncomplete = () => loadPlaylist();
+    }
+</script>
 </body>
 </html>
