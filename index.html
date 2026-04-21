@@ -128,38 +128,47 @@
     }
 
     // 2. Lưu vào kho lưu trữ (Auto-next logic thêm ở đây)
-    async function saveToLibrary() {
-        if (!currentPreview) return;
-        const btn = document.getElementById('downloadBtn');
-        btn.innerText = "Đang tải bài hát...";
-        btn.disabled = true;
+async function saveToLibrary() {
+    if (!currentPreview) return;
+    const btn = document.getElementById('downloadBtn');
+    btn.innerText = "Đang vượt rào cản bảo mật...";
+    btn.disabled = true;
 
-        try {
-            const response = await fetch(currentPreview.url);
-            const blob = await response.blob();
+    try {
+        // Sử dụng một Proxy trung gian để tránh lỗi CORS khi chạy trên Chrome
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
+        const targetUrl = encodeURIComponent(currentPreview.url);
 
-            const transaction = db.transaction(["songs"], "readwrite");
-            const store = transaction.objectStore("songs");
-            store.add({ 
-                name: currentPreview.title, 
-                data: blob, 
-                thumb: currentPreview.thumb 
-            });
+        const response = await fetch(proxyUrl + targetUrl);
+        if (!response.ok) throw new Error("Server chặn tải");
+        
+        const blob = await response.blob();
 
-            transaction.oncomplete = () => {
-                btn.innerText = "Đã lưu thành công!";
-                setTimeout(() => {
-                    document.getElementById('previewArea').style.display = 'none';
-                    btn.disabled = false;
-                    btn.innerText = "Xác nhận & Tải xuống kho lưu trữ";
-                }, 1500);
-                loadLibrary();
-            };
-        } catch (err) {
-            alert("Lỗi tải xuống! Có thể trình duyệt chặn file từ server này.");
-            btn.disabled = false;
-        }
+        const transaction = db.transaction(["songs"], "readwrite");
+        const store = transaction.objectStore("songs");
+        store.add({ 
+            name: currentPreview.title, 
+            data: blob, 
+            thumb: currentPreview.thumb 
+        });
+
+        transaction.oncomplete = () => {
+            btn.innerText = "Đã lưu vào kho Offline!";
+            btn.style.background = "#27ae60";
+            setTimeout(() => {
+                document.getElementById('previewArea').style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "Xác nhận & Tải xuống kho lưu trữ";
+            }, 1500);
+            loadLibrary();
+        };
+    } catch (err) {
+        console.error(err);
+        alert("Vẫn bị lỗi CORS! Cách sửa: Bạn hãy cài extension 'Allow CORS' trên Chrome hoặc chạy qua Live Server.");
+        btn.disabled = false;
+        btn.innerText = "Thử lại lần nữa";
     }
+}
 
     // 3. Load & Play (Có Auto-Next)
     let songList = [];
