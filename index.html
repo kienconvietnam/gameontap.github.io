@@ -1,223 +1,2186 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="galaxy">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-Music Pro: Preview & Download</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sổ Ghi Chép Đại Học Digital</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tesseract OCR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
     <style>
-        :root { --primary: #ff4757; --bg: #0f0c29; --glass: rgba(255, 255, 255, 0.1); }
+        :root {
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-heading: 'Outfit', 'Inter', sans-serif;
+            --font-code: 'Fira Code', monospace;
+            
+            /* Theme: Galaxy (Default) */
+            --bg-primary: #0b0d19;
+            --bg-secondary: #14182d;
+            --bg-card: rgba(23, 28, 51, 0.65);
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.12);
+            --border-glow: rgba(138, 43, 226, 0.4);
+            --text-main: #f0f3ff;
+            --text-muted: #94a3b8;
+            --accent: #8a2be2;
+            --accent-glow: #a855f7;
+            --accent-gradient: linear-gradient(135deg, #8a2be2, #4f46e5);
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --particle-color: rgba(255, 255, 255, 0.8);
+            --editor-bg: #111424;
+            --accent-rgb: 138, 43, 226;
+        }
+
+        /* Dynamic Theme Switcher Definitions */
+        [data-theme="bamboo"] {
+            --bg-primary: #06140e;
+            --bg-secondary: #0d261c;
+            --bg-card: rgba(13, 38, 28, 0.7);
+            --border-color: rgba(74, 222, 128, 0.2);
+            --border-glow: rgba(34, 197, 94, 0.5);
+            --text-main: #ecfdf5;
+            --text-muted: #86efac;
+            --accent: #10b981;
+            --accent-glow: #34d399;
+            --accent-gradient: linear-gradient(135deg, #059669, #10b981);
+            --particle-color: rgba(134, 239, 172, 0.8);
+            --editor-bg: #091d15;
+            --accent-rgb: 16, 185, 129;
+        }
+
+        [data-theme="deepsea"] {
+            --bg-primary: #031329;
+            --bg-secondary: #072247;
+            --bg-card: rgba(7, 34, 71, 0.7);
+            --border-color: rgba(56, 189, 248, 0.2);
+            --border-glow: rgba(14, 165, 233, 0.5);
+            --text-main: #f0f9ff;
+            --text-muted: #7dd3fc;
+            --accent: #0284c7;
+            --accent-glow: #38bdf8;
+            --accent-gradient: linear-gradient(135deg, #0369a1, #0ea5e9);
+            --particle-color: rgba(125, 211, 252, 0.7);
+            --editor-bg: #051b3a;
+            --accent-rgb: 2, 132, 199;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-primary: #0d021a;
+            --bg-secondary: #1a0533;
+            --bg-card: rgba(30, 5, 55, 0.75);
+            --border-color: rgba(244, 63, 94, 0.3);
+            --border-glow: #06b6d4;
+            --text-main: #fff0f6;
+            --text-muted: #f472b6;
+            --accent: #f43f5e;
+            --accent-glow: #06b6d4;
+            --accent-gradient: linear-gradient(135deg, #f43f5e, #d946ef);
+            --particle-color: rgba(244, 63, 94, 0.9);
+            --editor-bg: #140326;
+            --accent-rgb: 244, 63, 94;
+        }
+
+        [data-theme="aurora"] {
+            --bg-primary: #051b1e;
+            --bg-secondary: #0b2e34;
+            --bg-card: rgba(11, 46, 52, 0.7);
+            --border-color: rgba(45, 212, 191, 0.25);
+            --border-glow: rgba(168, 85, 247, 0.5);
+            --text-main: #f0fdfa;
+            --text-muted: #5eead4;
+            --accent: #14b8a6;
+            --accent-glow: #a855f7;
+            --accent-gradient: linear-gradient(135deg, #0d9488, #8b5cf6);
+            --particle-color: rgba(94, 234, 212, 0.8);
+            --editor-bg: #082428;
+            --accent-rgb: 20, 184, 166;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-glass: rgba(0, 0, 0, 0.03);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --border-glow: rgba(99, 102, 241, 0.3);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #4f46e5;
+            --accent-glow: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #4f46e5, #06b6d4);
+            --card-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            --particle-color: rgba(79, 70, 229, 0.3);
+            --editor-bg: #ffffff;
+            --accent-rgb: 79, 70, 229;
+        }
+
+        [data-theme="paper"] {
+            --bg-primary: #fbf7ee;
+            --bg-secondary: #f4ebd9;
+            --bg-card: rgba(244, 235, 217, 0.8);
+            --bg-glass: rgba(0, 0, 0, 0.03);
+            --border-color: rgba(120, 80, 40, 0.15);
+            --border-glow: rgba(180, 100, 30, 0.3);
+            --text-main: #2c221e;
+            --text-muted: #786254;
+            --accent: #b45309;
+            --accent-glow: #d97706;
+            --accent-gradient: linear-gradient(135deg, #b45309, #d97706);
+            --card-shadow: 0 6px 20px rgba(80, 50, 20, 0.08);
+            --particle-color: rgba(180, 83, 9, 0.3);
+            --editor-bg: #fffdf8;
+            --accent-rgb: 180, 83, 9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: var(--font-main);
+        }
+
         body {
-            margin: 0; font-family: 'Segoe UI', sans-serif;
-            background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-        }
-        .container { width: 90%; max-width: 500px; padding: 20px; }
-        
-        .glass-card {
-            background: var(--glass); backdrop-filter: blur(15px);
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
-            padding: 20px; margin-bottom: 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.4s ease, color 0.4s ease;
         }
 
-        .search-area { display: flex; gap: 10px; }
-        input {
-            flex: 1; background: rgba(0,0,0,0.3); border: 1px solid #444;
-            border-radius: 10px; color: white; padding: 12px; outline: none;
-        }
-        button {
-            background: var(--primary); border: none; color: white;
-            padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold;
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.5s;
         }
 
-        /* Khu vực xem trước */
-        #previewArea { display: none; text-align: center; animation: fadeIn 0.5s; }
-        .thumb-preview { width: 100%; border-radius: 15px; margin-top: 15px; }
-        
-        /* Danh sách kho nhạc */
-        .playlist { max-height: 250px; overflow-y: auto; }
-        .track-item {
-            display: flex; justify-content: space-between; padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+        /* Layout Structure */
+        #app-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: 75px; /* Space for Mobile Navigation */
         }
-        .track-item:hover { background: rgba(255,255,255,0.1); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (min-width: 1024px) {
+            #app-container {
+                flex-direction: row;
+                padding-bottom: 0;
+            }
+        }
+
+        /* Top Header Navigation */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.25rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .icon-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .icon-btn:hover, .icon-btn:active {
+            background: rgba(var(--accent-rgb), 0.2);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* Desktop Sidebar Navigation */
+        .sidebar-nav {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar-nav {
+                display: flex;
+                flex-direction: column;
+                width: 260px;
+                background: var(--bg-card);
+                border-right: 1px solid var(--border-color);
+                backdrop-filter: blur(20px);
+                padding: 1.5rem 1rem;
+                gap: 0.5rem;
+                height: 100vh;
+                position: sticky;
+                top: 0;
+            }
+            
+            .main-content {
+                flex: 1;
+                max-width: calc(100vw - 260px);
+            }
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.85rem 1.1rem;
+            border-radius: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-main);
+            background: var(--accent-gradient);
+            box-shadow: 0 4px 20px rgba(var(--accent-rgb), 0.35);
+        }
+
+        /* Mobile Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 50;
+            padding: 0 0.5rem;
+        }
+
+        @media (min-width: 1024px) {
+            .bottom-nav {
+                display: none;
+            }
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 20%;
+            padding: 0.4rem 0;
+            transition: all 0.2s;
+        }
+
+        .bottom-nav-item i {
+            font-size: 1.25rem;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Floating Action Button (FAB) */
+        .fab-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.5);
+            border: none;
+            cursor: pointer;
+            z-index: 45;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .fab-btn:active {
+            transform: scale(0.9);
+        }
+
+        @media (min-width: 1024px) {
+            .fab-btn {
+                bottom: 30px;
+                right: 30px;
+            }
+        }
+
+        /* View Panels System */
+        .view-panel {
+            display: none;
+            padding: 1.25rem;
+            animation: fadeIn 0.35s ease-out forwards;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Hero Section */
+        .hero-banner {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.75rem 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 250px;
+            height: 250px;
+            background: var(--accent-gradient);
+            opacity: 0.15;
+            filter: blur(50px);
+            border-radius: 50%;
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: rgba(var(--accent-rgb), 0.15);
+            color: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .stat-info .value {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .stat-info .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Quick Action Grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.75rem;
+        }
+
+        @media (min-width: 768px) {
+            .quick-actions {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .action-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .action-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-card i {
+            font-size: 1.6rem;
+            color: var(--accent-glow);
+        }
+
+        .action-card span {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Section Titles */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        /* Notebook Hierarchy Tree Styling */
+        .hierarchy-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .subject-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .subject-header {
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            background: var(--bg-glass);
+            user-select: none;
+        }
+
+        .subject-title {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .color-badge {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .chapters-container {
+            padding: 0.5rem 0.5rem 0.75rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .chapter-node {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .lessons-list {
+            margin-top: 0.5rem;
+            padding-left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .lesson-item {
+            padding: 0.6rem 0.85rem;
+            border-radius: 10px;
+            background: var(--bg-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .lesson-item:hover {
+            background: rgba(var(--accent-rgb), 0.2);
+        }
+
+        /* Rich Text Editor Container */
+        .editor-container {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 70vh;
+            box-shadow: var(--card-shadow);
+        }
+
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 60px;
+            z-index: 20;
+        }
+
+        .tool-btn {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.15s;
+        }
+
+        .tool-btn:hover, .tool-btn.active {
+            background: var(--accent-gradient);
+            color: #fff;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 1.5rem;
+            outline: none;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-main);
+            overflow-y: auto;
+            min-height: 350px;
+        }
+
+        .editor-content h1 { font-size: 1.8rem; margin: 1rem 0 0.5rem; font-family: var(--font-heading); }
+        .editor-content h2 { font-size: 1.4rem; margin: 0.8rem 0 0.4rem; font-family: var(--font-heading); }
+        .editor-content h3 { font-size: 1.15rem; margin: 0.6rem 0 0.3rem; }
+        .editor-content p { margin-bottom: 0.8rem; }
+        .editor-content ul, .editor-content ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+        .editor-content blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-muted);
+            font-style: italic;
+            background: rgba(var(--accent-rgb), 0.05);
+            padding: 0.6rem 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Editor Callout Boxes */
+        .callout {
+            padding: 0.85rem 1.1rem;
+            border-radius: 12px;
+            margin: 0.8rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+        }
+        .callout-remember { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); }
+        .callout-warning { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .callout-star { background: rgba(234, 179, 8, 0.15); border: 1px solid rgba(234, 179, 8, 0.3); }
+
+        /* Media Attachments Container inside Editor */
+        .attachments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+
+        .attachment-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            border: 1px solid var(--border-color);
+            background: #000;
+        }
+
+        .attachment-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .attachment-card .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            color: #ff4d4d;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Lecture Audio Player */
+        .audio-player-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .audio-timer {
+            font-family: var(--font-code);
+            font-size: 1.1rem;
+            color: var(--accent-glow);
+            font-weight: 600;
+        }
+
+        /* Quick Note Lecture Floating Overlay */
+        .quick-note-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 1.25rem;
+        }
+
+        .quick-note-modal.active {
+            display: flex;
+        }
+
+        /* Interactive Mind Map Visualizer */
+        .mindmap-container {
+            width: 100%;
+            height: 65vh;
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .mindmap-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .mindmap-node {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mindmap-node rect {
+            fill: var(--bg-card);
+            stroke: var(--accent);
+            stroke-width: 2px;
+            rx: 10px;
+        }
+
+        .mindmap-node text {
+            fill: var(--text-main);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Flashcards Learning View */
+        .flashcard-wrapper {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 450px;
+            height: 280px;
+            margin: 1.5rem auto;
+        }
+
+        .flashcard-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .flashcard-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            border-color: var(--accent);
+        }
+
+        /* Modals and Toasts */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            animation: modalPop 0.25s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent);
+            color: var(--text-main);
+            padding: 0.85rem 1.25rem;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(12px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Form elements */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .form-input:focus, .form-select:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:active { opacity: 0.85; }
+
+        .search-highlight {
+            background: rgba(234, 179, 8, 0.4);
+            color: #fff;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+
+        /* Responsive Utilities */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .mt-3 { margin-top: 0.75rem; }
+        .mt-4 { margin-top: 1rem; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 style="text-align: center;">🎵 YouTube Offline Player</h2>
+    <!-- Particle System Canvas -->
+    <canvas id="particle-canvas"></canvas>
 
-    <div class="glass-card">
-        <div class="search-area">
-            <input type="text" id="linkInput" placeholder="Dán link YouTube vào đây...">
-            <button onclick="checkVideo()">Kiểm tra</button>
-        </div>
-    </div>
+    <!-- Main Application Container -->
+    <div id="app-container">
 
-    <div id="previewArea" class="glass-card">
-        <img id="prevThumb" class="thumb-preview" src="" alt="Thumbnail">
-        <h3 id="prevTitle" style="font-size: 16px; margin: 15px 0;"></h3>
-        <button id="downloadBtn" onclick="saveToLibrary()" style="width: 100%; background: #2ecc71;">
-            Xác nhận & Tải xuống kho lưu trữ
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div class="brand-logo">
+                <i class="fa-solid fa-book-bookmark"></i>
+                <span>UniNotes Pro</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" id="btn-quick-note" title="⚡ Ghi Chép Nhanh">
+                    <i class="fa-solid fa-bolt-lightning" style="color: #eab308;"></i>
+                </button>
+                <button class="icon-btn" id="btn-search-toggle" title="Tìm Kiếm">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Desktop Sidebar Navigation -->
+        <nav class="sidebar-nav">
+            <a class="nav-link active" data-view="dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang Chủ</span>
+            </a>
+            <a class="nav-link" data-view="notebooks">
+                <i class="fa-solid fa-book-journal-whills"></i>
+                <span>Sổ Ghi Chép</span>
+            </a>
+            <a class="nav-link" data-view="mindmap">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>Sơ Đồ Tư Duy</span>
+            </a>
+            <a class="nav-link" data-view="study">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>Góc Học Tập</span>
+            </a>
+            <a class="nav-link" data-view="settings">
+                <i class="fa-solid fa-gear"></i>
+                <span>Cài Đặt</span>
+            </a>
+        </nav>
+
+        <!-- Main Dynamic View Container -->
+        <main class="main-content">
+
+            <!-- 1. DASHBOARD VIEW -->
+            <section id="view-dashboard" class="view-panel active">
+                <div class="hero-banner">
+                    <h1 class="hero-title">MY DIGITAL NOTEBOOK</h1>
+                    <p class="hero-subtitle">Biến chiếc điện thoại thành thư viện học tập vô hạn trên giảng đường đại học.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-folder-open"></i></div>
+                        <div class="stat-info">
+                            <div class="value" id="stat-subjects">0</div>
+                            <div class="label">Môn Học</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-file-lines"></i></div>
+                        <div class="stat-info">
+                            <div class="value" id="stat-notes">0</div>
+                            <div class="label">Ghi Chép</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-camera"></i></div>
+                        <div class="stat-info">
+                            <div class="value" id="stat-slides">0</div>
+                            <div class="label">Slide Ảnh</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-database"></i></div>
+                        <div class="stat-info">
+                            <div class="value" id="stat-storage">0 KB</div>
+                            <div class="label">Dung Lượng</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Thao Tác Nhanh</div>
+                <div class="quick-actions">
+                    <div class="action-card" id="qa-new-note">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Tạo Ghi Chép</span>
+                    </div>
+                    <div class="action-card" id="qa-quick-lecture">
+                        <i class="fa-solid fa-bolt-lightning" style="color: #eab308;"></i>
+                        <span>Quick Note Giảng Đường</span>
+                    </div>
+                    <div class="action-card" id="qa-mindmap">
+                        <i class="fa-solid fa-diagram-project"></i>
+                        <span>Sơ Đồ Tư Duy</span>
+                    </div>
+                    <div class="action-card" id="qa-flashcards">
+                        <i class="fa-solid fa-clone"></i>
+                        <span>Flashcards Ôn Thi</span>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <div class="section-title">Ghi Chép Gần Đây</div>
+                </div>
+                <div id="dashboard-recent-list" class="hierarchy-tree">
+                    <!-- Dynamic recent note items inserted via JS -->
+                </div>
+            </section>
+
+            <!-- 2. NOTEBOOKS MANAGEMENT VIEW -->
+            <section id="view-notebooks" class="view-panel">
+                <div class="flex-between mt-3 mb-3">
+                    <div class="section-title">Quản Lý Sổ Học Tập</div>
+                    <button class="btn-primary" id="btn-add-subject">
+                        <i class="fa-solid fa-plus"></i> Thêm Môn Học
+                    </button>
+                </div>
+                <div id="notebooks-tree-container" class="hierarchy-tree">
+                    <!-- Subject -> Chapter -> Lesson tree dynamically rendered -->
+                </div>
+            </section>
+
+            <!-- 3. EDITOR VIEW PANEL -->
+            <section id="view-editor" class="view-panel">
+                <div class="flex-between mb-3">
+                    <button class="tool-btn" id="btn-back-notebooks">
+                        <i class="fa-solid fa-arrow-left"></i> Quay Lại
+                    </button>
+                    <div class="flex gap-2">
+                        <span id="editor-save-status" style="font-size: 0.85rem; color: var(--text-muted); align-self: center;">
+                            <i class="fa-solid fa-check"></i> Đã lưu
+                        </span>
+                        <button class="tool-btn" id="btn-export-note" title="Xuất Bài Học">
+                            <i class="fa-solid fa-file-export"></i> Xuất
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="editor-title" class="form-input" placeholder="Tiêu đề bài học..." style="font-size: 1.4rem; font-weight: 700;">
+                </div>
+
+                <div class="editor-container">
+                    <div class="editor-toolbar">
+                        <button class="tool-btn" data-cmd="bold" title="In Đậm"><i class="fa-solid fa-bold"></i></button>
+                        <button class="tool-btn" data-cmd="italic" title="In Nghiêng"><i class="fa-solid fa-italic"></i></button>
+                        <button class="tool-btn" data-cmd="underline" title="Gạch Chân"><i class="fa-solid fa-underline"></i></button>
+                        <button class="tool-btn" data-cmd="formatBlock" data-val="H1" title="Tiêu Đề 1">H1</button>
+                        <button class="tool-btn" data-cmd="formatBlock" data-val="H2" title="Tiêu Đề 2">H2</button>
+                        <button class="tool-btn" data-cmd="insertUnorderedList" title="Danh Sách"><i class="fa-solid fa-list-ul"></i></button>
+                        <button class="tool-btn" id="btn-add-callout-remember" title="📌 Cần Nhớ">📌 Nhớ</button>
+                        <button class="tool-btn" id="btn-add-callout-warning" title="⚠ Chú Ý">⚠ Chú Ý</button>
+                        <button class="tool-btn" id="btn-add-callout-star" title="⭐ Trọng Tâm">⭐ Trọng Tâm</button>
+                        <button class="tool-btn" id="btn-editor-camera" title="Chụp Slide Camera"><i class="fa-solid fa-camera"></i> Slide</button>
+                        <button class="tool-btn" id="btn-editor-record" title="Ghi Âm Bài Giảng"><i class="fa-solid fa-microphone"></i> Ghi Âm</button>
+                        <button class="tool-btn" id="btn-editor-ocr" title="Nhận Diện Chữ OCR"><i class="fa-solid fa-font"></i> OCR</button>
+                        <button class="tool-btn" id="btn-editor-ai-summary" title="Tóm Tắt Ý Chính"><i class="fa-solid fa-wand-magic-sparkles"></i> Tóm Tắt</button>
+                    </div>
+
+                    <!-- Slide Images Attachment Gallery -->
+                    <div id="editor-slides-gallery" class="attachments-grid" style="padding: 0 1.5rem;"></div>
+
+                    <!-- Main Editable Canvas -->
+                    <div id="editor-body" class="editor-content" contenteditable="true" placeholder="Bắt đầu ghi chép nội dung bài học tại đây..."></div>
+                </div>
+            </section>
+
+            <!-- 4. MIND MAP VIEW PANEL -->
+            <section id="view-mindmap" class="view-panel">
+                <div class="flex-between mb-3">
+                    <div class="section-title">Sơ Đồ Tư Duy Tương Tác</div>
+                    <button class="btn-primary" id="btn-generate-mindmap">
+                        <i class="fa-solid fa-rotate"></i> Tạo Từ Ghi Chép
+                    </button>
+                </div>
+                <div class="mindmap-container" id="mindmap-canvas-wrapper">
+                    <svg class="mindmap-svg" id="mindmap-svg-element"></svg>
+                </div>
+            </section>
+
+            <!-- 5. STUDY & FLASHCARDS VIEW PANEL -->
+            <section id="view-study" class="view-panel">
+                <div class="section-title mb-3">Ôn Tập Flashcards</div>
+                <div id="flashcard-container">
+                    <div class="flashcard-wrapper" id="flashcard-card">
+                        <div class="flashcard-inner" id="flashcard-inner-card">
+                            <div class="flashcard-front">
+                                <h3 id="fc-question">Bấm để tạo Flashcards từ bài học của bạn</h3>
+                            </div>
+                            <div class="flashcard-back">
+                                <p id="fc-answer">Đáp án sẽ xuất hiện ở mặt sau</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-3 mt-4">
+                        <button class="tool-btn" id="fc-btn-unremembered" style="color: #ef4444;"><i class="fa-solid fa-xmark"></i> Chưa Nhớ</button>
+                        <button class="tool-btn" id="fc-btn-remembered" style="color: #22c55e;"><i class="fa-solid fa-check"></i> Đã Thuộc</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. SETTINGS VIEW PANEL -->
+            <section id="view-settings" class="view-panel">
+                <div class="section-title mb-3">Cài Đặt & Tùy Biến</div>
+                
+                <div class="stat-card mb-3" style="flex-direction: column; align-items: flex-start;">
+                    <label class="form-label">Chủ Đề Giao Diện (Theme)</label>
+                    <select id="setting-theme-select" class="form-select">
+                        <option value="galaxy">🌌 Vũ Trụ (Galaxy)</option>
+                        <option value="bamboo">🎋 Rừng Tre (Bamboo)</option>
+                        <option value="deepsea">🌊 Biển Sâu (Deep Sea)</option>
+                        <option value="cyberpunk">🌆 Cyberpunk</option>
+                        <option value="aurora">🌌 Aurora</option>
+                        <option value="light">☀️ Minimal Light</option>
+                        <option value="paper">📜 Sổ Giấy (Paper)</option>
+                    </select>
+                </div>
+
+                <div class="stat-card mb-3" style="flex-direction: column; align-items: flex-start;">
+                    <label class="form-label">Hiệu Ứng Nền (Particles)</label>
+                    <button class="btn-primary" id="setting-toggle-particles">Bật / Tắt Particle Canvas</button>
+                </div>
+
+                <div class="stat-card mb-3" style="flex-direction: column; align-items: flex-start;">
+                    <label class="form-label">Sao Lưu & Khôi Phục Dữ Liệu</label>
+                    <div class="flex gap-2">
+                        <button class="btn-primary" id="setting-btn-backup"><i class="fa-solid fa-download"></i> Xuất Backup JSON</button>
+                        <button class="tool-btn" id="setting-btn-restore"><i class="fa-solid fa-upload"></i> Khôi Phục JSON</button>
+                        <input type="file" id="setting-restore-input" accept=".json" class="hidden">
+                    </div>
+                </div>
+
+                <div class="stat-card" style="flex-direction: column; align-items: flex-start; border-color: rgba(239, 68, 68, 0.4);">
+                    <label class="form-label" style="color: #ef4444;">Xóa Dữ Liệu</label>
+                    <button class="btn-primary" id="setting-btn-reset" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                        <i class="fa-solid fa-trash"></i> Xóa Toàn Bộ Dữ Liệu Application
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="bottom-nav-item active" data-view="dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Trang Chủ</span>
+            </div>
+            <div class="bottom-nav-item" data-view="notebooks">
+                <i class="fa-solid fa-book-journal-whills"></i>
+                <span>Sổ</span>
+            </div>
+            <div class="bottom-nav-item" id="mobile-bottom-quick">
+                <i class="fa-solid fa-bolt-lightning" style="color: #eab308;"></i>
+                <span>Nhanh</span>
+            </div>
+            <div class="bottom-nav-item" data-view="mindmap">
+                <i class="fa-solid fa-diagram-project"></i>
+                <span>Mindmap</span>
+            </div>
+            <div class="bottom-nav-item" data-view="settings">
+                <i class="fa-solid fa-gear"></i>
+                <span>Cài Đặt</span>
+            </div>
+        </nav>
+
+        <!-- Floating Add FAB Button -->
+        <button class="fab-btn" id="global-fab-btn" title="Tạo Ghi Chép Mới">
+            <i class="fa-solid fa-plus"></i>
         </button>
+
     </div>
 
-    <div class="glass-card" style="text-align: center;">
-        <div id="nowPlaying">Đang dừng...</div>
-        <audio id="mainAudio" controls style="width: 100%; margin-top: 15px;"></audio>
-    </div>
-
-    <div class="glass-card">
-        <div style="font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
-            <span>Kho nhạc của bạn</span>
-            <span id="storageInfo" style="font-size: 10px; color: #aaa;">Offline</span>
+    <!-- ⚡ Quick Note Lecture Overlay Modal -->
+    <div id="modal-quick-note" class="quick-note-modal">
+        <div class="flex-between mb-3">
+            <div class="section-title" style="color: #eab308;"><i class="fa-solid fa-bolt-lightning"></i> Quick Note Giảng Đường</div>
+            <button class="icon-btn" id="btn-close-quick-note"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div id="playlist" class="playlist"></div>
+        <textarea id="quick-note-text" class="form-input" style="flex: 1; resize: none; font-size: 1.1rem; margin-bottom: 1rem;" placeholder="Nhập nhanh bài giảng... Tự động lưu sau 2 giây."></textarea>
+        <div class="flex-between">
+            <div class="flex gap-2">
+                <button class="tool-btn" id="btn-quick-cam"><i class="fa-solid fa-camera"></i> Chụp</button>
+                <button class="tool-btn" id="btn-quick-mic"><i class="fa-solid fa-microphone"></i> Ghi Âm</button>
+            </div>
+            <span id="quick-save-status" style="font-size: 0.85rem; color: #22c55e;"><i class="fa-solid fa-check"></i> Đã lưu</span>
+        </div>
     </div>
-</div>
 
-<script>
-    let db;
-    let currentPreview = null;
-    const audio = document.getElementById('mainAudio');
+    <!-- 📷 Camera Slide Capture Modal -->
+    <div id="modal-camera" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="flex-between mb-3">
+                <div class="section-title">Chụp Slide Bài Giảng</div>
+                <button class="icon-btn" id="btn-close-camera"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <video id="camera-video-feed" autoplay playsinline style="width: 100%; border-radius: 12px; background: #000; height: 260px; object-fit: cover;"></video>
+            <canvas id="camera-canvas" class="hidden"></canvas>
+            <div class="flex justify-center gap-3 mt-3">
+                <button class="btn-primary" id="btn-trigger-snap"><i class="fa-solid fa-circle-dot"></i> Chụp Ảnh</button>
+            </div>
+        </div>
+    </div>
 
-    // Khởi tạo Database (Giữ nguyên)
-    const request = indexedDB.open("MusicStore", 1);
-    request.onupgradeneeded = e => {
-        db = e.target.result;
-        db.createObjectStore("songs", { keyPath: "id", autoIncrement: true });
-    };
-    request.onsuccess = e => { db = e.target.result; loadLibrary(); };
+    <!-- 🔍 Search Overlay Modal -->
+    <div id="modal-search" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="flex-between mb-3">
+                <div class="section-title">Tìm Kiếm Ghi Chép</div>
+                <button class="icon-btn" id="btn-close-search"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input type="text" id="search-input" class="form-input" placeholder="Nhập từ khóa tìm kiếm trong toàn bộ ghi chú...">
+            <div id="search-results-list" class="hierarchy-tree mt-3"></div>
+        </div>
+    </div>
 
-    // 1. Hàm bóc tách ID Video cực mạnh (Sửa lỗi hiển thị hình)
-    function getYouTubeID(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length == 11) ? match[2] : null;
-    }
+    <!-- 📚 Modal Add Subject / Chapter / Lesson -->
+    <div id="modal-add-hierarchy" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="section-title mb-3" id="hierarchy-modal-title">Tạo Môn Học Mới</div>
+            <div class="form-group">
+                <label class="form-label">Tên hiển thị</label>
+                <input type="text" id="hierarchy-input-title" class="form-input" placeholder="Ví dụ: Kinh tế vi mô, Giải tích 1...">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button class="tool-btn" id="btn-cancel-hierarchy">Hủy</button>
+                <button class="btn-primary" id="btn-save-hierarchy">Lưu</button>
+            </div>
+        </div>
+    </div>
 
-    async function checkVideo() {
-        const url = document.getElementById('linkInput').value;
-        const videoId = getYouTubeID(url);
-        
-        if (!videoId) {
-            alert("Link YouTube không hợp lệ! Hãy copy link từ trình duyệt.");
-            return;
-        }
+    <!-- Notification Toast Element -->
+    <div id="toast-element" class="toast-notification">
+        <i class="fa-solid fa-circle-check" style="color: var(--accent-glow);"></i>
+        <span id="toast-message">Thông báo hệ thống</span>
+    </div>
 
-        const thumbElement = document.getElementById('prevThumb');
-        const titleElement = document.getElementById('prevTitle');
-        const previewArea = document.getElementById('previewArea');
+    <script>
+        // ==========================================
+        // 1. INDEXEDDB DATABASE MANAGER
+        // ==========================================
+        const DB_NAME = 'UniNotesPro_DB';
+        const DB_VERSION = 1;
+        let db = null;
 
-        // Cập nhật Thumbnail với độ phân giải cao
-        thumbElement.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-        thumbElement.setAttribute("referrerpolicy", "no-referrer"); // Quan trọng để hiện hình
-        
-        titleElement.innerText = "Đang kiểm tra thông tin...";
-        previewArea.style.display = 'block';
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        // Giả lập thông tin tải (Lưu ý: Bạn cần thay link demo bằng link mp3 thật để nút Tải hoạt động)
-        currentPreview = {
-            title: "Video ID: " + videoId,
-            url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // Link demo
-            thumb: thumbElement.src
-        };
-        
-        titleElement.innerText = "Xác nhận video: " + videoId;
-    }
+                request.onupgradeneeded = (e) => {
+                    const dbInstance = e.target.result;
+                    if (!dbInstance.objectStoreNames.contains('subjects')) {
+                        dbInstance.createObjectStore('subjects', { keyPath: 'id' });
+                    }
+                    if (!dbInstance.objectStoreNames.contains('chapters')) {
+                        dbInstance.createObjectStore('chapters', { keyPath: 'id' });
+                    }
+                    if (!dbInstance.objectStoreNames.contains('lessons')) {
+                        dbInstance.createObjectStore('lessons', { keyPath: 'id' });
+                    }
+                };
 
-    // 2. Lưu vào kho lưu trữ (Auto-next logic thêm ở đây)
-async function saveToLibrary() {
-    if (!currentPreview) return;
-    const btn = document.getElementById('downloadBtn');
-    btn.innerText = "Đang vượt rào cản bảo mật...";
-    btn.disabled = true;
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
 
-    try {
-        // Sử dụng một Proxy trung gian để tránh lỗi CORS khi chạy trên Chrome
-        const proxyUrl = "https://api.allorigins.win/raw?url=";
-        const targetUrl = encodeURIComponent(currentPreview.url);
-
-        const response = await fetch(proxyUrl + targetUrl);
-        if (!response.ok) throw new Error("Server chặn tải");
-        
-        const blob = await response.blob();
-
-        const transaction = db.transaction(["songs"], "readwrite");
-        const store = transaction.objectStore("songs");
-        store.add({ 
-            name: currentPreview.title, 
-            data: blob, 
-            thumb: currentPreview.thumb 
-        });
-
-        transaction.oncomplete = () => {
-            btn.innerText = "Đã lưu vào kho Offline!";
-            btn.style.background = "#27ae60";
-            setTimeout(() => {
-                document.getElementById('previewArea').style.display = 'none';
-                btn.disabled = false;
-                btn.innerText = "Xác nhận & Tải xuống kho lưu trữ";
-            }, 1500);
-            loadLibrary();
-        };
-    } catch (err) {
-        console.error(err);
-        alert("Vẫn bị lỗi CORS! Cách sửa: Bạn hãy cài extension 'Allow CORS' trên Chrome hoặc chạy qua Live Server.");
-        btn.disabled = false;
-        btn.innerText = "Thử lại lần nữa";
-    }
-}
-
-    // 3. Load & Play (Có Auto-Next)
-    let songList = [];
-    let currentPlayingId = null;
-
-    function loadLibrary() {
-        const store = db.transaction("songs").objectStore("songs");
-        const request = store.getAll();
-        request.onsuccess = () => {
-            const list = document.getElementById('playlist');
-            list.innerHTML = "";
-            songList = request.result;
-            songList.forEach((song) => {
-                const item = document.createElement('div');
-                item.className = "track-item";
-                item.innerHTML = `
-                    <span style="flex:1">🎵 ${song.name}</span>
-                    <span style="color:#ff4757; font-size:12px; padding:5px" onclick="deleteSong(event, ${song.id})">Xóa</span>
-                `;
-                item.onclick = () => playSong(song);
-                list.appendChild(item);
+                request.onerror = (e) => {
+                    console.error('IndexedDB Error:', e.target.error);
+                    reject(e.target.error);
+                };
             });
-        };
-    }
-
-    function playSong(song) {
-        currentPlayingId = song.id;
-        const url = URL.createObjectURL(song.data);
-        audio.src = url;
-        audio.play();
-        document.getElementById('nowPlaying').innerText = "Đang phát: " + song.name;
-    }
-
-    // Tự động chuyển bài (Auto-next)
-    audio.onended = () => {
-        const currentIndex = songList.findIndex(s => s.id === currentPlayingId);
-        if (currentIndex !== -1 && currentIndex < songList.length - 1) {
-            playSong(songList[currentIndex + 1]);
-        } else {
-            playSong(songList[0]); // Hết danh sách thì quay lại bài đầu
         }
-    };
 
-    function deleteSong(e, id) {
-        e.stopPropagation(); // Ngăn việc bấm Xóa mà nó lại chạy nhạc
-        const transaction = db.transaction(["songs"], "readwrite");
-        transaction.objectStore("songs").delete(id);
-        transaction.oncomplete = () => loadLibrary();
-    }
-</script>
+        // Generic IndexedDB CRUD Helpers
+        function dbSave(storeName, item) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.put(item);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbGetAll(storeName) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbDelete(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        // ==========================================
+        // 2. PARTICLE BACKGROUND CANVAS ENGINE
+        // ==========================================
+        let canvas, ctx, animationFrameId;
+        let particles = [];
+        let particlesEnabled = true;
+
+        function initParticles() {
+            canvas = document.getElementById('particle-canvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+
+            window.addEventListener('resize', resizeCanvas);
+
+            particles = [];
+            const particleCount = Math.floor((window.innerWidth * window.innerHeight) / 12000);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 2 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.4,
+                    vy: (Math.random() - 0.5) * 0.4,
+                    alpha: Math.random() * 0.7 + 0.3
+                });
+            }
+
+            if (particlesEnabled) {
+                renderParticles();
+            }
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function renderParticles() {
+            if (!particlesEnabled || !ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const particleStyle = getComputedStyle(document.documentElement).getPropertyValue('--particle-color').trim() || 'rgba(255,255,255,0.7)';
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = particleStyle;
+                ctx.fill();
+            });
+
+            animationFrameId = requestAnimationFrame(renderParticles);
+        }
+
+        // ==========================================
+        // 3. UI STATE & NAVIGATION ROUTER
+        // ==========================================
+        let currentLessonId = null;
+        let currentHierarchyMode = null; // 'subject', 'chapter', 'lesson'
+        let hierarchyTargetParentId = null;
+
+        function showToast(message) {
+            const toast = document.getElementById('toast-element');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        function switchView(viewId) {
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.nav-link, .bottom-nav-item').forEach(link => link.classList.remove('active'));
+
+            const targetPanel = document.getElementById(`view-${viewId}`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+
+            document.querySelectorAll(`[data-view="${viewId}"]`).forEach(el => el.classList.add('active'));
+
+            if (viewId === 'dashboard') refreshDashboard();
+            if (viewId === 'notebooks') renderNotebooksTree();
+            if (viewId === 'mindmap') generateMindmap();
+            if (viewId === 'study') loadFlashcards();
+        }
+
+        // ==========================================
+        // 4. RICH TEXT EDITOR & CAMERA / AUDIO LOGIC
+        // ==========================================
+        let autoSaveTimer = null;
+
+        function setupEditor() {
+            const editorBody = document.getElementById('editor-body');
+            const editorTitle = document.getElementById('editor-title');
+
+            // Format buttons
+            document.querySelectorAll('.editor-toolbar .tool-btn[data-cmd]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cmd = btn.dataset.cmd;
+                    const val = btn.dataset.val || null;
+                    document.execCommand(cmd, false, val);
+                    triggerAutoSave();
+                });
+            });
+
+            // Callout Insertion Helpers
+            document.getElementById('btn-add-callout-remember').addEventListener('click', () => {
+                insertCallout('callout-remember', '📌 Nội dung cần nhớ: ');
+            });
+            document.getElementById('btn-add-callout-warning').addEventListener('click', () => {
+                insertCallout('callout-warning', '⚠ Lưu ý quan trọng: ');
+            });
+            document.getElementById('btn-add-callout-star').addEventListener('click', () => {
+                insertCallout('callout-star', '⭐ Kiến thức trọng tâm: ');
+            });
+
+            editorBody.addEventListener('input', triggerAutoSave);
+            editorTitle.addEventListener('input', triggerAutoSave);
+        }
+
+        function insertCallout(className, textPrefix) {
+            const editorBody = document.getElementById('editor-body');
+            const calloutHtml = `<div class="callout ${className}">${textPrefix}Nhập ghi chú...</div><p><br></p>`;
+            document.execCommand('insertHTML', false, calloutHtml);
+            triggerAutoSave();
+        }
+
+        function triggerAutoSave() {
+            document.getElementById('editor-save-status').innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Đang lưu...';
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(saveCurrentLesson, 1200);
+        }
+
+        async function saveCurrentLesson() {
+            if (!currentLessonId) return;
+
+            const lessons = await dbGetAll('lessons');
+            const lesson = lessons.find(l => l.id === currentLessonId);
+            if (!lesson) return;
+
+            lesson.title = document.getElementById('editor-title').value || 'Bài học không tên';
+            lesson.content = document.getElementById('editor-body').innerHTML;
+            lesson.updatedAt = new Date().toISOString();
+
+            await dbSave('lessons', lesson);
+            document.getElementById('editor-save-status').innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu';
+        }
+
+        async function openLessonEditor(lessonId) {
+            currentLessonId = lessonId;
+            const lessons = await dbGetAll('lessons');
+            const lesson = lessons.find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            document.getElementById('editor-title').value = lesson.title || '';
+            document.getElementById('editor-body').innerHTML = lesson.content || '';
+            renderLessonSlides(lesson.slides || []);
+
+            switchView('editor');
+        }
+
+        /* 📷 Camera Capture Integration */
+        let cameraStream = null;
+
+        function initCameraModule() {
+            const modalCam = document.getElementById('modal-camera');
+            const videoFeed = document.getElementById('camera-video-feed');
+
+            document.getElementById('btn-editor-camera').addEventListener('click', async () => {
+                modalCam.classList.add('active');
+                try {
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    videoFeed.srcObject = cameraStream;
+                } catch (err) {
+                    showToast('Không thể truy cập Camera!');
+                    modalCam.classList.remove('active');
+                }
+            });
+
+            document.getElementById('btn-close-camera').addEventListener('click', stopCamera);
+
+            document.getElementById('btn-trigger-snap').addEventListener('click', async () => {
+                const canvasCam = document.getElementById('camera-canvas');
+                canvasCam.width = videoFeed.videoWidth;
+                canvasCam.height = videoFeed.videoHeight;
+                const ctxCam = canvasCam.getContext('2d');
+                ctxCam.drawImage(videoFeed, 0, 0);
+
+                const dataUrl = canvasCam.toDataURL('image/jpeg', 0.8);
+                stopCamera();
+
+                if (currentLessonId) {
+                    const lessons = await dbGetAll('lessons');
+                    const lesson = lessons.find(l => l.id === currentLessonId);
+                    if (lesson) {
+                        if (!lesson.slides) lesson.slides = [];
+                        lesson.slides.push(dataUrl);
+                        await dbSave('lessons', lesson);
+                        renderLessonSlides(lesson.slides);
+                        showToast('Đã thêm slide ảnh vào bài học!');
+                    }
+                }
+            });
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            document.getElementById('modal-camera').classList.remove('active');
+        }
+
+        function renderLessonSlides(slides) {
+            const gallery = document.getElementById('editor-slides-gallery');
+            gallery.innerHTML = '';
+            slides.forEach((slideData, idx) => {
+                const card = document.createElement('div');
+                card.className = 'attachment-card';
+                card.innerHTML = `
+                    <img src="${slideData}" alt="Slide ${idx+1}">
+                    <button class="remove-btn" onclick="removeSlideImage(${idx})"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                gallery.appendChild(card);
+            });
+        }
+
+        async function removeSlideImage(index) {
+            if (!currentLessonId) return;
+            const lessons = await dbGetAll('lessons');
+            const lesson = lessons.find(l => l.id === currentLessonId);
+            if (lesson && lesson.slides) {
+                lesson.slides.splice(index, 1);
+                await dbSave('lessons', lesson);
+                renderLessonSlides(lesson.slides);
+                showToast('Đã xóa slide ảnh!');
+            }
+        }
+
+        /* 🎙 Web Speech Recognition & Audio Lecture Logic */
+        let speechRecognizer = null;
+
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                document.getElementById('btn-editor-record').style.opacity = '0.5';
+                return;
+            }
+
+            speechRecognizer = new SpeechRecognition();
+            speechRecognizer.continuous = true;
+            speechRecognizer.interimResults = true;
+            speechRecognizer.lang = 'vi-VN';
+
+            speechRecognizer.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript + ' ';
+                    }
+                }
+                if (transcript) {
+                    document.execCommand('insertHTML', false, `<p>🎙 <i>${transcript}</i></p>`);
+                    triggerAutoSave();
+                }
+            };
+
+            let isRecording = false;
+            document.getElementById('btn-editor-record').addEventListener('click', () => {
+                if (!isRecording) {
+                    speechRecognizer.start();
+                    isRecording = true;
+                    showToast('Đang nhận diện giọng nói bài giảng...');
+                    document.getElementById('btn-editor-record').classList.add('active');
+                } else {
+                    speechRecognizer.stop();
+                    isRecording = false;
+                    showToast('Đã dừng ghi âm.');
+                    document.getElementById('btn-editor-record').classList.remove('active');
+                }
+            });
+        }
+
+        /* 🔤 Tesseract OCR Slide Text Extraction */
+        function initOCRModule() {
+            document.getElementById('btn-editor-ocr').addEventListener('click', async () => {
+                if (!currentLessonId) return;
+                const lessons = await dbGetAll('lessons');
+                const lesson = lessons.find(l => l.id === currentLessonId);
+
+                if (!lesson || !lesson.slides || lesson.slides.length === 0) {
+                    showToast('Vui lòng chụp slide ảnh trước khi trích xuất chữ!');
+                    return;
+                }
+
+                showToast('Đang nhận diện chữ OCR từ slide...');
+                const lastSlide = lesson.slides[lesson.slides.length - 1];
+
+                try {
+                    const result = await Tesseract.recognize(lastSlide, 'vie+eng');
+                    const extractedText = result.data.text;
+                    document.execCommand('insertHTML', false, `<blockquote class="callout-star"><b>Văn bản OCR từ Slide:</b><br>${extractedText}</blockquote>`);
+                    triggerAutoSave();
+                    showToast('Trích xuất OCR thành công!');
+                } catch (err) {
+                    showToast('Lỗi OCR trích xuất chữ.');
+                }
+            });
+        }
+
+        // ==========================================
+        // 5. NOTEBOOK HIERARCHY TREE LOGIC
+        // ==========================================
+        async function renderNotebooksTree() {
+            const container = document.getElementById('notebooks-tree-container');
+            container.innerHTML = '';
+
+            const subjects = await dbGetAll('subjects');
+            const chapters = await dbGetAll('chapters');
+            const lessons = await dbGetAll('lessons');
+
+            if (subjects.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">Chưa có môn học nào. Hãy bấm "Thêm Môn Học" để bắt đầu!</div>`;
+                return;
+            }
+
+            subjects.forEach(subject => {
+                const subNode = document.createElement('div');
+                subNode.className = 'subject-node';
+
+                const subChapters = chapters.filter(c => c.subjectId === subject.id);
+
+                subNode.innerHTML = `
+                    <div class="subject-header">
+                        <div class="subject-title">
+                            <span class="color-badge" style="background: ${subject.color || 'var(--accent)'};"></span>
+                            <span>${subject.title}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="tool-btn" onclick="openAddHierarchyModal('chapter', '${subject.id}')" title="Thêm Chương"><i class="fa-solid fa-plus"></i></button>
+                            <button class="tool-btn" onclick="deleteSubject('${subject.id}')" style="color:#ef4444;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="chapters-container">
+                        ${subChapters.length === 0 ? '<div style="font-size:0.85rem; color:var(--text-muted);">Chưa có chương học nào</div>' : ''}
+                    </div>
+                `;
+
+                const chapContainer = subNode.querySelector('.chapters-container');
+
+                subChapters.forEach(chap => {
+                    const chapNode = document.createElement('div');
+                    chapNode.className = 'chapter-node';
+
+                    const chapLessons = lessons.filter(l => l.chapterId === chap.id);
+
+                    chapNode.innerHTML = `
+                        <div class="chapter-header">
+                            <span>📖 ${chap.title}</span>
+                            <div class="flex gap-2">
+                                <button class="tool-btn" onclick="createLessonInChapter('${chap.id}')" title="Thêm Bài Học"><i class="fa-solid fa-plus"></i></button>
+                                <button class="tool-btn" onclick="deleteChapter('${chap.id}')" style="color:#ef4444;"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="lessons-list">
+                            ${chapLessons.map(l => `
+                                <div class="lesson-item" onclick="openLessonEditor('${l.id}')">
+                                    <span>📝 ${l.title || 'Bài học mới'}</span>
+                                    <button class="tool-btn" onclick="event.stopPropagation(); deleteLesson('${l.id}')" style="color:#ef4444;"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    chapContainer.appendChild(chapNode);
+                });
+
+                container.appendChild(subNode);
+            });
+        }
+
+        function openAddHierarchyModal(mode, parentId = null) {
+            currentHierarchyMode = mode;
+            hierarchyTargetParentId = parentId;
+            const modal = document.getElementById('modal-add-hierarchy');
+            const titleEl = document.getElementById('hierarchy-modal-title');
+            
+            titleEl.innerText = mode === 'subject' ? 'Tạo Môn Học Mới' : 'Tạo Chương Mới';
+            document.getElementById('hierarchy-input-title').value = '';
+            modal.classList.add('active');
+        }
+
+        async function saveHierarchyItem() {
+            const title = document.getElementById('hierarchy-input-title').value.trim();
+            if (!title) return;
+
+            const id = 'id_' + Date.now();
+            if (currentHierarchyMode === 'subject') {
+                const colors = ['#8a2be2', '#10b981', '#0284c7', '#f43f5e', '#14b8a6', '#b45309'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                await dbSave('subjects', { id, title, color, createdAt: new Date().toISOString() });
+            } else if (currentHierarchyMode === 'chapter') {
+                await dbSave('chapters', { id, subjectId: hierarchyTargetParentId, title, createdAt: new Date().toISOString() });
+            }
+
+            document.getElementById('modal-add-hierarchy').classList.remove('active');
+            renderNotebooksTree();
+            refreshDashboard();
+            showToast('Đã lưu thành công!');
+        }
+
+        async function createLessonInChapter(chapterId) {
+            const id = 'lesson_' + Date.now();
+            const newLesson = {
+                id,
+                chapterId,
+                title: 'Bài Học Mới',
+                content: '<p>Bắt đầu ghi chép nội dung...</p>',
+                slides: [],
+                createdAt: new Date().toISOString()
+            };
+            await dbSave('lessons', newLesson);
+            renderNotebooksTree();
+            openLessonEditor(id);
+        }
+
+        async function deleteSubject(id) {
+            if (confirm('Xóa môn học này và tất cả bài học bên trong?')) {
+                await dbDelete('subjects', id);
+                renderNotebooksTree();
+                refreshDashboard();
+                showToast('Đã xóa môn học!');
+            }
+        }
+
+        async function deleteChapter(id) {
+            if (confirm('Xóa chương học này?')) {
+                await dbDelete('chapters', id);
+                renderNotebooksTree();
+                showToast('Đã xóa chương!');
+            }
+        }
+
+        async function deleteLesson(id) {
+            if (confirm('Xóa bài học này?')) {
+                await dbDelete('lessons', id);
+                renderNotebooksTree();
+                refreshDashboard();
+                showToast('Đã xóa bài học!');
+            }
+        }
+
+        // ==========================================
+        // 6. MIND MAP AUTOMATIC GENERATOR
+        // ==========================================
+        async function generateMindmap() {
+            const svg = document.getElementById('mindmap-svg-element');
+            svg.innerHTML = '';
+
+            let rootTitle = 'Sơ Đồ Tóm Tắt';
+            let nodesList = ['Khái niệm chung', 'Nội dung trọng tâm', 'Ứng dụng thực tế'];
+
+            if (currentLessonId) {
+                const lessons = await dbGetAll('lessons');
+                const lesson = lessons.find(l => l.id === currentLessonId);
+                if (lesson) {
+                    rootTitle = lesson.title || rootTitle;
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = lesson.content || '';
+                    const headings = Array.from(tempDiv.querySelectorAll('h1, h2, h3, li, b')).map(e => e.innerText.trim()).filter(t => t.length > 0);
+                    if (headings.length > 0) nodesList = headings.slice(0, 6);
+                }
+            }
+
+            const centerX = svg.clientWidth / 2 || 200;
+            const centerY = svg.clientHeight / 2 || 200;
+
+            // Draw Central Root Node
+            drawMindmapNode(svg, centerX, centerY, rootTitle, true);
+
+            // Draw Child Radial Nodes
+            const radius = 130;
+            nodesList.forEach((nodeText, idx) => {
+                const angle = (idx / nodesList.length) * Math.PI * 2;
+                const nx = centerX + Math.cos(angle) * radius;
+                const ny = centerY + Math.sin(angle) * radius;
+
+                // Draw connecting line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', centerX);
+                line.setAttribute('y1', centerY);
+                line.setAttribute('x2', nx);
+                line.setAttribute('y2', ny);
+                line.setAttribute('stroke', 'var(--accent)');
+                line.setAttribute('stroke-width', '2');
+                svg.appendChild(line);
+
+                drawMindmapNode(svg, nx, ny, nodeText, false);
+            });
+        }
+
+        function drawMindmapNode(svg, x, y, text, isRoot) {
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'mindmap-node');
+            g.setAttribute('transform', `translate(${x - 60}, ${y - 20})`);
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('width', '120');
+            rect.setAttribute('height', '40');
+            if (isRoot) rect.setAttribute('style', 'fill: var(--accent); stroke: #fff;');
+
+            const textNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textNode.setAttribute('x', '60');
+            textNode.setAttribute('y', '25');
+            textNode.setAttribute('text-anchor', 'middle');
+            textNode.textContent = text.length > 12 ? text.substring(0, 10) + '...' : text;
+            if (isRoot) textNode.setAttribute('fill', '#ffffff');
+
+            g.appendChild(rect);
+            g.appendChild(textNode);
+            svg.appendChild(g);
+        }
+
+        // ==========================================
+        // 7. FLASHCARDS & STUDY SYSTEM
+        // ==========================================
+        let flashcardItems = [];
+        let currentFcIndex = 0;
+
+        async function loadFlashcards() {
+            flashcardItems = [];
+            const lessons = await dbGetAll('lessons');
+
+            lessons.forEach(l => {
+                const temp = document.createElement('div');
+                temp.innerHTML = l.content || '';
+                const callouts = temp.querySelectorAll('.callout');
+                callouts.forEach(c => {
+                    flashcardItems.push({
+                        q: `Bài: ${l.title}`,
+                        a: c.innerText
+                    });
+                });
+            });
+
+            if (flashcardItems.length === 0) {
+                flashcardItems.push({ q: 'Chưa có ghi chú trọng tâm', a: 'Hãy chèn các box 📌 Cần nhớ hoặc ⭐ Trọng tâm trong bài học!' });
+            }
+
+            currentFcIndex = 0;
+            displayFlashcard();
+        }
+
+        function displayFlashcard() {
+            const card = flashcardItems[currentFcIndex];
+            document.getElementById('fc-question').innerText = card.q;
+            document.getElementById('fc-answer').innerText = card.a;
+            document.getElementById('flashcard-inner-card').classList.remove('flipped');
+        }
+
+        /* 🔍 Search Engine Implementation */
+        async function performSearch(query) {
+            const resultsContainer = document.getElementById('search-results-list');
+            resultsContainer.innerHTML = '';
+
+            if (!query.trim()) return;
+
+            const lessons = await dbGetAll('lessons');
+            const term = query.toLowerCase();
+
+            const matched = lessons.filter(l => (l.title && l.title.toLowerCase().includes(term)) || (l.content && l.content.toLowerCase().includes(term)));
+
+            if (matched.length === 0) {
+                resultsContainer.innerHTML = '<div style="color:var(--text-muted);">Không tìm thấy kết quả phù hợp</div>';
+                return;
+            }
+
+            matched.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'lesson-item';
+                item.innerHTML = `<span>📝 ${m.title}</span>`;
+                item.onclick = () => {
+                    document.getElementById('modal-search').classList.remove('active');
+                    openLessonEditor(m.id);
+                };
+                resultsContainer.appendChild(item);
+            });
+        }
+
+        // ==========================================
+        // 8. DASHBOARD & SETTINGS MANAGEMENT
+        // ==========================================
+        async function refreshDashboard() {
+            const subjects = await dbGetAll('subjects');
+            const lessons = await dbGetAll('lessons');
+
+            document.getElementById('stat-subjects').innerText = subjects.length;
+            document.getElementById('stat-notes').innerText = lessons.length;
+
+            let totalSlides = 0;
+            lessons.forEach(l => { if (l.slides) totalSlides += l.slides.length; });
+            document.getElementById('stat-slides').innerText = totalSlides;
+
+            // Estimate storage size
+            const jsonStr = JSON.stringify(lessons);
+            const kbSize = (jsonStr.length / 1024).toFixed(1);
+            document.getElementById('stat-storage').innerText = `${kbSize} KB`;
+
+            // Recent Notes List
+            const recentContainer = document.getElementById('dashboard-recent-list');
+            recentContainer.innerHTML = '';
+
+            const sorted = lessons.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+            if (sorted.length === 0) {
+                recentContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">Chưa có ghi chép gần đây.</div>';
+            } else {
+                sorted.forEach(l => {
+                    const el = document.createElement('div');
+                    el.className = 'lesson-item';
+                    el.innerHTML = `<span>📝 ${l.title}</span><span style="font-size:0.75rem; color:var(--text-muted);">${new Date(l.createdAt).toLocaleDateString('vi-VN')}</span>`;
+                    el.onclick = () => openLessonEditor(l.id);
+                    recentContainer.appendChild(el);
+                });
+            }
+        }
+
+        function initSettings() {
+            const themeSelect = document.getElementById('setting-theme-select');
+            themeSelect.addEventListener('change', (e) => {
+                document.documentElement.setAttribute('data-theme', e.target.value);
+                localStorage.setItem('uninotes_theme', e.target.value);
+            });
+
+            const savedTheme = localStorage.getItem('uninotes_theme') || 'galaxy';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeSelect.value = savedTheme;
+
+            // Toggle Particles
+            document.getElementById('setting-toggle-particles').addEventListener('click', () => {
+                particlesEnabled = !particlesEnabled;
+                document.getElementById('particle-canvas').style.opacity = particlesEnabled ? '1' : '0';
+                if (particlesEnabled) renderParticles();
+                showToast(`Particle canvas: ${particlesEnabled ? 'Bật' : 'Tắt'}`);
+            });
+
+            // JSON Backup
+            document.getElementById('setting-btn-backup').addEventListener('click', async () => {
+                const data = {
+                    subjects: await dbGetAll('subjects'),
+                    chapters: await dbGetAll('chapters'),
+                    lessons: await dbGetAll('lessons')
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `UniNotes_Backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                showToast('Đã xuất file sao lưu JSON!');
+            });
+
+            // JSON Restore
+            const restoreInput = document.getElementById('setting-restore-input');
+            document.getElementById('setting-btn-restore').addEventListener('click', () => restoreInput.click());
+            restoreInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (imported.subjects) for (let s of imported.subjects) await dbSave('subjects', s);
+                        if (imported.chapters) for (let c of imported.chapters) await dbSave('chapters', c);
+                        if (imported.lessons) for (let l of imported.lessons) await dbSave('lessons', l);
+                        showToast('Khôi phục dữ liệu thành công!');
+                        refreshDashboard();
+                    } catch (err) {
+                        showToast('File JSON không hợp lệ!');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            // Reset Application Data
+            document.getElementById('setting-btn-reset').addEventListener('click', async () => {
+                if (confirm('BẠN CÓ CHẮC CHẮN MỐN XÓA TOÀN BỘ DỮ LIỆU SỔ HỌC TẬP?')) {
+                    indexedDB.deleteDatabase(DB_NAME);
+                    location.reload();
+                }
+            });
+        }
+
+        // ==========================================
+        // 9. QUICK NOTE LECTURE MODAL LOGIC
+        // ==========================================
+        function initQuickNoteModule() {
+            const modal = document.getElementById('modal-quick-note');
+            const textarea = document.getElementById('quick-note-text');
+            let timer = null;
+
+            document.querySelectorAll('#btn-quick-note, #qa-quick-lecture, #mobile-bottom-quick').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    textarea.value = localStorage.getItem('uninotes_quick_text') || '';
+                    modal.classList.add('active');
+                });
+            });
+
+            document.getElementById('btn-close-quick-note').addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+
+            textarea.addEventListener('input', () => {
+                document.getElementById('quick-save-status').innerText = 'Đang lưu...';
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    localStorage.setItem('uninotes_quick_text', textarea.value);
+                    document.getElementById('quick-save-status').innerHTML = '<i class="fa-solid fa-check"></i> Đã lưu';
+                }, 1000);
+            });
+        }
+
+        // ==========================================
+        // 10. MAIN APP INITIALIZATION BOOTSTRAP
+        // ==========================================
+        window.addEventListener('load', async () => {
+            await initDatabase();
+            initParticles();
+            setupEditor();
+            initCameraModule();
+            initSpeechRecognition();
+            initOCRModule();
+            initSettings();
+            initQuickNoteModule();
+
+            // Navigation Bindings
+            document.querySelectorAll('[data-view]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const view = el.dataset.view;
+                    switchView(view);
+                });
+            });
+
+            document.getElementById('global-fab-btn').addEventListener('click', () => openAddHierarchyModal('subject'));
+            document.getElementById('qa-new-note').addEventListener('click', () => switchView('notebooks'));
+            document.getElementById('qa-mindmap').addEventListener('click', () => switchView('mindmap'));
+            document.getElementById('qa-flashcards').addEventListener('click', () => switchView('study'));
+            document.getElementById('btn-add-subject').addEventListener('click', () => openAddHierarchyModal('subject'));
+            document.getElementById('btn-save-hierarchy').addEventListener('click', saveHierarchyItem);
+            document.getElementById('btn-cancel-hierarchy').addEventListener('click', () => document.getElementById('modal-add-hierarchy').classList.remove('active'));
+            document.getElementById('btn-back-notebooks').addEventListener('click', () => switchView('notebooks'));
+
+            // Search Overlay
+            document.getElementById('btn-search-toggle').addEventListener('click', () => {
+                document.getElementById('modal-search').classList.add('active');
+            });
+            document.getElementById('btn-close-search').addEventListener('click', () => {
+                document.getElementById('modal-search').classList.remove('active');
+            });
+            document.getElementById('search-input').addEventListener('input', (e) => performSearch(e.target.value));
+
+            // Flashcard Flip Interaction
+            document.getElementById('flashcard-card').addEventListener('click', () => {
+                document.getElementById('flashcard-inner-card').classList.toggle('flipped');
+            });
+
+            document.getElementById('fc-btn-unremembered').addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentFcIndex = (currentFcIndex + 1) % flashcardItems.length;
+                displayFlashcard();
+            });
+
+            document.getElementById('fc-btn-remembered').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showToast('Đã thuộc thẻ này!');
+                currentFcIndex = (currentFcIndex + 1) % flashcardItems.length;
+                displayFlashcard();
+            });
+
+            refreshDashboard();
+        });
+    </script>
 </body>
 </html>
