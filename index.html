@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sổ bài giảng</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#faf8f4;--card:#fff;--tx:#222;--mu:#777;--ac:#2a6f6b;--bd:#e3ded4;--rec:#c43d3d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1c1c;--card:#252626;--tx:#eee;--mu:#999;--ac:#5fbfb8;--bd:#3a3b3b;--rec:#e26a6a}}
+:root[data-theme="dark"]{--bg:#1b1c1c;--card:#252626;--tx:#eee;--mu:#999;--ac:#5fbfb8;--bd:#3a3b3b;--rec:#e26a6a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{display:flex;min-height:100vh}
+aside{width:250px;border-right:1px solid var(--bd);padding:14px;flex-shrink:0}
+main{flex:1;padding:16px;min-width:0;max-width:100%}
+h1{font-size:18px;margin:0 0 10px}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;padding:6px 12px}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+button.rec{background:var(--rec);color:#fff;border-color:var(--rec)}
+.item{padding:8px 10px;border:1px solid var(--bd);border-radius:8px;margin-top:8px;background:var(--card);cursor:pointer}
+.item.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.item small{display:block;color:var(--mu)}
+input.t{font-size:20px;font-weight:600;border:none;background:none;color:var(--tx);width:100%;border-bottom:1px dashed var(--bd)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:14px}
+textarea{width:100%;min-height:140px;font:inherit;background:none;color:var(--tx);border:none;resize:vertical;outline:none}
+.hint{color:var(--mu);font-size:13px}
+.resume{background:color-mix(in srgb,var(--ac) 12%,transparent);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+.map{overflow-x:auto;padding:8px 0}
+.n{display:flex;align-items:center}
+.kids{display:flex;flex-direction:column;margin-left:22px;border-left:2px solid var(--bd)}
+.kids>.n{padding:4px 0 4px 16px;position:relative}
+.kids>.n:before{content:"";position:absolute;left:0;top:50%;width:16px;border-top:2px solid var(--bd)}
+.box{border:1.5px solid var(--ac);border-radius:8px;padding:4px 10px;background:var(--card);white-space:nowrap;max-width:280px;min-width:30px;outline:none;white-space:normal}
+.root>.n>.box,.n.r>.box{background:var(--ac);color:#fff;font-weight:600}
+.act{display:none;gap:2px;margin-left:4px}.n:hover>.act,.n:focus-within>.act{display:flex}
+.act button{padding:0 6px;font-size:13px}
+@media(max-width:700px){.app{flex-direction:column}aside{width:100%;border-right:0;border-bottom:1px solid var(--bd)}.act{display:flex}}
+</style></head><body>
+<div class="app">
+<aside><h1>📚 Sổ bài giảng</h1><button class="p" id="new">+ Buổi học mới</button><div id="list"></div></aside>
+<main id="main"></main>
+</div>
+<script>
+const KEY='lessons.v1';let L=[],cur=null,rec=null,wantRec=false,interim='',mapping=false;
+try{L=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){L=[]}
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}};
+const get=()=>L.find(x=>x.id===cur);
+function el(t,c,txt){const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e}
+function fmt(d){return new Date(d).toLocaleString('vi-VN',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
+
+function renderList(){const l=$('list');l.innerHTML='';
+ L.slice().sort((a,b)=>b.updated-a.updated).forEach(x=>{
+  const d=el('div','item'+(x.id===cur?' on':''));d.append(el('b',0,x.title||'Không tên'),el('small',0,fmt(x.updated)+' · '+x.transcript.length+' ký tự'));
+  d.onclick=()=>open(x.id);l.append(d)})}
+
+$('new').onclick=()=>{stop();const x={id:Date.now()+'',title:'Buổi học '+new Date().toLocaleDateString('vi-VN'),transcript:'',tree:null,mapped:0,updated:Date.now()};L.push(x);save();open(x.id)};
+
+function open(id){stop();cur=id;renderList();renderMain()}
+
+function renderMain(){const m=$('main'),x=get();m.innerHTML='';
+ if(!x){m.append(el('p','hint','Chọn một buổi học bên trái hoặc tạo buổi mới.'));return}
+ const t=el('input','t');t.value=x.title;t.oninput=()=>{x.title=t.value;x.updated=Date.now();save();renderList()};m.append(t);
+ const bar=el('div','bar');
+ const rb=el('button','p','🎙 '+(x.transcript?'Tiếp tục ghi âm':'Bắt đầu ghi âm'));rb.id='rb';rb.onclick=toggle;
+ const mb=el('button',0,'✨ Tạo / cập nhật sơ đồ tư duy');mb.id='mb';mb.onclick=makeMap;
+ bar.append(rb,mb,el('span','hint',''));bar.lastChild.id='st';m.append(bar);
+ const c=el('div','card');
+ if(x.transcript){const r=el('div','resume','▶ Đang dừng tại: …'+x.transcript.slice(-90).replace(/\s+/g,' '));c.append(r)}
+ const ta=el('textarea');ta.id='ta';ta.placeholder='Nội dung bài giảng sẽ tự điền vào đây. Bạn có thể sửa trực tiếp.';ta.value=x.transcript;
+ ta.oninput=()=>{x.transcript=ta.value;x.updated=Date.now();save()};c.append(ta);m.append(c);
+ const mc=el('div','card');mc.append(el('b',0,'Sơ đồ tư duy'),el('div','hint','Bấm vào chữ để sửa · rê chuột vào nhánh để thêm (+) hoặc xoá (×)'));
+ const mp=el('div','map');mp.id='map';mc.append(mp);m.append(mc);drawMap()}
+
+function status(s){const e=$('st');if(e)e.textContent=s}
+
+/* ghi âm */
+function toggle(){wantRec?stop():start()}
+function start(){const x=get();if(!x)return;
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){status('Trình duyệt không hỗ trợ nhận diện giọng nói — hãy dùng Chrome/Edge/Safari.');return}
+ rec=new SR();rec.lang='vi-VN';rec.continuous=true;rec.interimResults=true;
+ rec.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];
+   if(r.isFinal){x.transcript+=(x.transcript&&!/\s$/.test(x.transcript)?' ':'')+r[0].transcript.trim();x.updated=Date.now();save()}else it+=r[0].transcript}
+  interim=it;const ta=$('ta');if(ta){ta.value=x.transcript+(it?' '+it:'');ta.scrollTop=ta.scrollHeight}};
+ rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){wantRec=false;status('Chưa được cấp quyền micro.');ui()}};
+ rec.onend=()=>{if(wantRec){try{rec.start()}catch(e){}}else{const ta=$('ta');if(ta&&x)ta.value=x.transcript}};
+ try{rec.start();wantRec=true;status('● Đang ghi âm…');ui()}catch(e){status('Không mở được micro.')}}
+function stop(){wantRec=false;if(rec){try{rec.stop()}catch(e){}}rec=null;save();status('Đã lưu vị trí dừng.');ui()}
+function ui(){const b=$('rb');if(!b)return;b.className=wantRec?'rec':'p';b.textContent=wantRec?'⏹ Dừng & lưu':'🎙 '+(get()&&get().transcript?'Tiếp tục ghi âm':'Bắt đầu ghi âm')}
+addEventListener('beforeunload',()=>{wantRec=false;save()});
+document.addEventListener('visibilitychange',save);
+
+/* sơ đồ */
+function drawMap(){const mp=$('map'),x=get();if(!mp)return;mp.innerHTML='';
+ if(!x.tree){mp.append(el('p','hint','Chưa có sơ đồ. Ghi âm rồi bấm "Tạo / cập nhật sơ đồ tư duy".'));return}
+ mp.append(node(x.tree,null,true))}
+function node(n,parent,root){
+ const w=el('div','n'+(root?' r':'')),b=el('div','box',n.t);b.contentEditable='true';
+ b.onblur=()=>{n.t=b.textContent.trim()||'…';touch()};
+ b.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();b.blur()}};
+ w.append(b);const a=el('div','act');
+ const add=el('button',0,'+');add.onclick=()=>{(n.c=n.c||[]).push({t:'Ý mới',c:[]});touch();drawMap()};a.append(add);
+ if(parent){const d=el('button',0,'×');d.onclick=()=>{parent.c.splice(parent.c.indexOf(n),1);touch();drawMap()};a.append(d)}
+ w.append(a);
+ if(n.c&&n.c.length){const k=el('div','kids');n.c.forEach(ch=>k.append(node(ch,n,false)));w.append(k)}
+ return w}
+function touch(){const x=get();x.updated=Date.now();save()}
+
+async function makeMap(){const x=get();
+ if(!x.transcript.trim()){status('Chưa có nội dung để tạo sơ đồ.');return}
+ if(mapping)return;mapping=true;$('mb').disabled=true;status('AI đang tạo sơ đồ…');
+ try{
+  const sample=await claude.use('sample');
+  if(!sample){status('Tính năng AI chưa khả dụng ở phiên xem này.');return}
+  const fresh=x.tree?x.transcript.slice(x.mapped):x.transcript;
+  if(x.tree&&!fresh.trim()){status('Sơ đồ đã cập nhật, chưa có nội dung mới.');return}
+  const prompt='Bạn giúp sinh viên ghi chú bài giảng tiếng Việt. Biến nội dung thành sơ đồ tư duy nhiều nhánh (tối đa 4 cấp, mỗi nút ngắn gọn dưới 12 từ, gom ý theo chủ đề).'
+   +(x.tree?' Đây là sơ đồ HIỆN CÓ (giữ nguyên các chỉnh sửa của người dùng, chỉ bổ sung ý từ nội dung mới vào đúng nhánh hoặc tạo nhánh mới): '+JSON.stringify(x.tree)+'\n\nNỘI DUNG MỚI:\n':'\n\nNỘI DUNG:\n')
+   +fresh+'\n\nChỉ trả về JSON dạng {"t":"tiêu đề gốc","c":[{"t":"...","c":[...]}]} và không gì khác.';
+  const r=await sample.json(prompt,{cache:false});
+  if(r&&r.t){x.tree=r;x.mapped=x.transcript.length;touch();drawMap();status('Đã cập nhật sơ đồ.')}else status('AI trả về kết quả không hợp lệ.');
+ }catch(e){status(e&&e.code==='not_granted'?'Bạn chưa cho phép dùng AI.':'Lỗi khi gọi AI, thử lại sau.')}
+ finally{mapping=false;const b=$('mb');if(b)b.disabled=false}}
+
+renderList();if(L.length)open(L.slice().sort((a,b)=>b.updated-a.updated)[0].id);else renderMain();
+</script></body></html>
