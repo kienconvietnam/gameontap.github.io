@@ -1,0 +1,538 @@
+:root {
+  --ff-b: 'Be Vietnam Pro', system-ui, sans-serif;
+  --ok: #2fb67c;
+  --bad: #e5484d;
+}
+
+body {
+  --bg: #0b0d14;
+  --card: rgba(23, 26, 38, 0.88);
+  --fg: #ffffff;
+  --mut: #a0a5c0;
+  --ac: #7c5cff;
+  --on: #ffffff;
+  --r: 14px;
+  --ff-h: var(--ff-b);
+  --ln: rgba(255, 255, 255, 0.15);
+  --glass: blur(12px);
+}
+
+body[data-t=law] {
+  --bg: #0e1730;
+  --card: rgba(22, 35, 74, 0.9);
+  --fg: #f8f4e8;
+  --mut: #b0bcde;
+  --ac: #e2be6e;
+  --on: #1a1405;
+  --r: 6px;
+  --ff-h: 'Playfair Display', Georgia, serif;
+  --ln: rgba(212, 175, 90, 0.35);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 90px);
+}
+
+body[data-t=psy] {
+  --bg: #f1eeff;
+  --card: rgba(255, 255, 255, 0.92);
+  --fg: #1d1842;
+  --mut: #686296;
+  --ac: #7c5cff;
+  --on: #ffffff;
+  --r: 20px;
+  --ff-h: 'Quicksand', var(--ff-b);
+  --ln: rgba(124, 92, 255, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font: 16px/1.6 var(--ff-b);
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  transition: background-color .4s ease, color .4s ease;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--ff-h);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ac);
+  outline-offset: 2px;
+}
+
+#v {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 18px 60px;
+  min-height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.in {
+  animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(18px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.blob {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  z-index: 1;
+  display: none;
+  pointer-events: none;
+  animation: fl 14s ease-in-out infinite alternate;
+}
+
+body[data-t=psy] .blob {
+  display: block;
+}
+
+@keyframes fl {
+  to { transform: translate(40px, -50px) scale(1.15); }
+}
+
+/* Trang chủ */
+#v.home {
+  max-width: none;
+  padding: 0;
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.pn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 48px 40px;
+  text-align: left;
+  transition: flex 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.pn:hover, .pn:focus-visible {
+  flex: 1.4;
+}
+
+.pn.law {
+  background: #0e1730;
+  color: #f8f4e8;
+  font-family: 'Playfair Display', Georgia, serif;
+  border-right: 1px solid rgba(212, 175, 90, 0.4);
+}
+
+.pn.law::before {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(212, 175, 90, 0.3);
+  pointer-events: none;
+}
+
+.pn.psy {
+  background: linear-gradient(160deg, #ede9ff, #d9fff3);
+  color: #1d1842;
+  font-family: 'Quicksand', sans-serif;
+}
+
+.pn h2 { font-size: clamp(28px, 5vw, 46px); text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.pn p { font: 15px/1.5 var(--ff-b); opacity: 0.88; margin-top: 8px; }
+
+.pn .go {
+  margin-top: 24px;
+  align-self: flex-start;
+  padding: 12px 24px;
+  font: 700 14px var(--ff-b);
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+.pn.law .go { background: #d4af5a; color: #1a1405; border-radius: 4px; }
+.pn.psy .go { background: #7c5cff; color: #fff; border-radius: 99px; }
+.pn:hover .go { transform: translateX(8px); }
+
+.pn .big {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  font-size: 100px;
+  opacity: 0.12;
+  user-select: none;
+}
+
+.brand {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 10;
+  font: 600 13px var(--ff-b);
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+/* Danh mục môn học */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.bk {
+  padding: 8px 16px;
+  border: 1px solid var(--ln);
+  border-radius: 99px;
+  color: var(--fg);
+  background: var(--card);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  transition: all 0.25s;
+  font-weight: 500;
+}
+
+.bk:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+  transform: translateY(-1px);
+}
+
+.sub { color: var(--mut); margin: 6px 0 24px; font-size: 15px; }
+
+.st {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.chip {
+  padding: 12px 18px;
+  background: var(--card);
+  border: 1px solid var(--ln);
+  border-radius: var(--r);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+}
+
+.chip b {
+  display: block;
+  font: 700 24px var(--ff-h);
+  color: var(--ac);
+}
+
+.chip span {
+  font-size: 13px;
+  color: var(--mut);
+}
+
+.res {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 22px;
+  margin-bottom: 24px;
+  background: var(--ac);
+  color: var(--on);
+  border-radius: var(--r);
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  transition: transform 0.2s;
+}
+
+.res:hover { transform: translateY(-2px); }
+
+.ch {
+  background: var(--card);
+  border: 1px solid var(--ln);
+  border-radius: var(--r);
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+
+.ch:hover {
+  transform: translateY(-2px);
+  border-color: var(--ac);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.2);
+}
+
+.ch h3 { font-size: 20px; }
+.ch small { color: var(--mut); display: block; margin-top: 4px; }
+
+.bar {
+  height: 8px;
+  background: var(--ln);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--ac);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.acts {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.b {
+  padding: 10px 20px;
+  border-radius: var(--r);
+  font-weight: 600;
+  border: 1px solid var(--ac);
+  color: var(--ac);
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.b:hover {
+  background: var(--ac);
+  color: var(--on);
+  transform: translateY(-1px);
+}
+
+.b.p {
+  background: var(--ac);
+  color: var(--on);
+}
+
+.b.p:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Flashcard */
+.pg {
+  display: flex;
+  justify-content: space-between;
+  color: var(--mut);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sc {
+  perspective: 1200px;
+  height: 360px;
+  margin: 20px 0;
+}
+
+.cd {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.cd.f { transform: rotateY(180deg); }
+
+.fc {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: var(--card);
+  border: 1px solid var(--ln);
+  border-top: 5px solid var(--ac);
+  border-radius: var(--r);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: auto;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.3);
+}
+
+.fc.bk2 { transform: rotateY(180deg); }
+.fc h2 { font-size: clamp(20px, 3.5vw, 26px); color: var(--fg); }
+.fc small { color: var(--mut); margin-top: 16px; }
+.fc .ans { font: 700 22px var(--ff-h); color: var(--ac); margin-bottom: 12px; }
+
+.cd.sw { animation: sw 0.35s ease-out; }
+@keyframes sw {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Câu hỏi Trắc nghiệm */
+.q {
+  font-size: clamp(20px, 3.5vw, 25px);
+  margin: 20px 0;
+}
+
+.op {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  background: var(--card);
+  border: 1.5px solid var(--ln);
+  border-radius: var(--r);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  transition: all 0.2s;
+}
+
+.op:hover:not(:disabled) {
+  border-color: var(--ac);
+  transform: translateX(6px);
+}
+
+.op i {
+  font: 700 14px var(--ff-b);
+  font-style: normal;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ln);
+  color: var(--fg);
+  flex-shrink: 0;
+}
+
+.op.ok {
+  border-color: var(--ok);
+  background: rgba(47, 182, 124, 0.22);
+  animation: pop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.op.no {
+  border-color: var(--bad);
+  background: rgba(229, 72, 77, 0.22);
+  animation: sh 0.35s ease-in-out;
+}
+
+.op:disabled {
+  cursor: default;
+}
+
+@keyframes pop { 50% { transform: scale(1.015); } }
+@keyframes sh { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+.ex {
+  padding: 16px 18px;
+  border-left: 4px solid var(--ac);
+  background: var(--card);
+  border-radius: 0 var(--r) var(--r) 0;
+  margin: 18px 0;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+}
+
+/* Kết quả */
+.ring {
+  width: 190px;
+  height: 190px;
+  margin: 16px auto;
+  position: relative;
+}
+
+.ring svg { transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+.ring .tr { stroke: var(--ln); }
+.ring .pr { stroke: var(--ac); transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+
+.ring div {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  font: 800 46px var(--ff-h);
+  color: var(--fg);
+}
+
+.ring small { font: 14px var(--ff-b); color: var(--mut); }
+
+.cm {
+  text-align: center;
+  max-width: 580px;
+  margin: 0 auto 24px;
+}
+
+details {
+  background: var(--card);
+  border: 1px solid var(--ln);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+}
+
+summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+
+/* Lớp phủ chuyển cảnh (Wipe Effect) */
+.wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: var(--ac);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.wipe.active {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  #v.home { flex-direction: column; }
+  .pn { padding: 32px 24px; }
+  .sc { height: 400px; }
+}
