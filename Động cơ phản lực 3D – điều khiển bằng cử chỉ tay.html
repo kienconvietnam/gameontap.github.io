@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TURBOFAN // Động cơ phản lực 3D</title>
+<style>
+:root{--bg:#04070d;--fg:#d6f6ff;--ac:#00e5ff;--pn:rgba(6,16,28,.78);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0;touch-action:none}
+.p{position:fixed;background:var(--pn);border:1px solid rgba(0,229,255,.35);border-radius:10px;padding:12px 14px;backdrop-filter:blur(8px);font-size:12px}
+#hud{top:calc(12px + env(safe-area-inset-top,0px));left:12px;width:min(260px,70vw)}
+#hud h1{margin:0 0 4px;font-size:15px;letter-spacing:.15em;color:var(--ac)}
+#hud p{margin:4px 0;opacity:.8;line-height:1.5}
+#info{top:calc(12px + env(safe-area-inset-top,0px));right:12px;width:min(240px,60vw)}
+#info b{color:var(--ac);font-size:13px}
+#ctl{bottom:calc(12px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:94vw}
+button{background:rgba(0,229,255,.12);color:var(--fg);border:1px solid var(--ac);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+button:hover{background:rgba(0,229,255,.3)}
+input[type=range]{accent-color:var(--ac);width:140px}
+.lb{position:fixed;left:0;top:0;font-size:10px;padding:2px 6px;border:1px solid rgba(0,229,255,.5);background:rgba(0,10,20,.7);color:var(--ac);border-radius:4px;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .3s}
+#vid{position:fixed;right:12px;bottom:calc(80px + env(safe-area-inset-bottom,0px));width:120px;border-radius:8px;border:1px solid var(--ac);transform:scaleX(-1);display:none;opacity:.8}
+</style></head><body>
+<canvas id="c"></canvas><video id="vid" playsinline muted></video>
+<div class="p" id="hud"><h1>TURBOFAN // X-01</h1>
+<p>🖐 Xòe bàn tay → tách linh kiện<br>✊ Nắm tay → lắp lại<br>↔ Di chuyển tay → xoay mô hình<br>🙌 Hai tay → phóng to / thu nhỏ</p>
+<p>Chuột: kéo để xoay, cuộn để zoom, bấm vào bộ phận để xem chi tiết.</p>
+<p id="st" style="color:var(--ac)">● Chế độ chuột</p></div>
+<div class="p" id="info"><b>Chọn một bộ phận</b><br><span id="idesc">Bấm vào linh kiện trên mô hình.</span></div>
+<div class="p" id="ctl"><button id="bcam">📷 Bật camera</button><button id="bx">Tách / Lắp</button>
+<label>Tách <input type="range" id="sl" min="0" max="1" step="0.01" value="0"></label></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js"></script>
+<script>
+const cv=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));
+const S=new THREE.Scene();S.background=new THREE.Color(0x04070d);S.fog=new THREE.Fog(0x04070d,12,28);
+const cam=new THREE.PerspectiveCamera(45,1,.1,100);
+S.add(new THREE.AmbientLight(0x6688aa,.7));
+const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(4,6,5);S.add(dl);
+const pl=new THREE.PointLight(0x00e5ff,1.2,20);pl.position.set(-5,2,3);S.add(pl);
+const po=new THREE.PointLight(0xff7a2a,1,14);po.position.set(4,-1,2);S.add(po);
+const grid=new THREE.GridHelper(30,40,0x00a0b8,0x0a2a38);grid.position.y=-3.4;S.add(grid);
+const root=new THREE.Group();S.add(root);
+const parts=[];
+function M(c,e=0x000000,o=1){return new THREE.MeshStandardMaterial({color:c,metalness:.85,roughness:.3,emissive:e,side:THREE.DoubleSide,transparent:o<1,opacity:o})}
+function mk(name,desc,base,order,mat,spin){const g=new THREE.Group();g.position.x=base;g.userData={name,desc,base,order,mat,spin:spin||0,e0:mat.emissive.getHex(),dy:0};root.add(g);parts.push(g);return g}
+function add(g,geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);g.add(m);return m}
+function cylX(g,r1,r2,len,mat,x=0,open=true){const m=add(g,new THREE.CylinderGeometry(r1,r2,len,40,1,open),mat,x);m.rotation.z=-Math.PI/2;return m}
+function blades(g,x,r0,r1,n,chord,mat,tw=.6){for(let i=0;i<n;i++){const p=new THREE.Object3D();p.rotation.x=i/n*Math.PI*2;g.add(p);const b=new THREE.Mesh(new THREE.BoxGeometry(chord,r1-r0,.025),mat);b.position.set(x,(r0+r1)/2,0);b.rotation.y=tw;p.add(b)}}
+// Vỏ nacelle
+let m=M(0x5a7a90,0x001018,.28);let g=mk('Vỏ động cơ (Nacelle)','Vỏ ngoài khí động học, dẫn không khí vào động cơ, giảm ồn và bảo vệ các bộ phận bên trong.',.2,4,m);
+const prof=[];for(let i=0;i<=24;i++){const t=i/24,y=-2.6+t*5.6;prof.push(new THREE.Vector2(1.25+.5*Math.sin(Math.min(t*1.6,1)*Math.PI*.85)-.45*t*t*1.1,y))}
+add(g,new THREE.LatheGeometry(prof,56),m).rotation.z=-Math.PI/2;
+// Quạt
+m=M(0xc9d6e0);g=mk('Quạt (Fan)','Quạt lớn phía trước hút khí; phần lớn lượng khí đi vòng bên ngoài lõi tạo ra khoảng 80% lực đẩy.',-2.3,0,m,.05);
+cylX(g,.32,.32,.4,m,0,false);add(g,new THREE.ConeGeometry(.34,.7,32),M(0xe8eef2),-.5).rotation.z=Math.PI/2;
+blades(g,0,.3,1.4,22,.3,m,.7);
+// LPC
+m=M(0x8fb4d0);g=mk('Máy nén áp suất thấp','Các tầng cánh nén khí lần đầu, tăng áp suất trước khi vào máy nén cao áp.',-1.3,1,m,.07);
+cylX(g,.3,.3,.8,m);for(let i=0;i<3;i++)blades(g,-.3+i*.3,.3,.95-i*.08,26,.12,m,.5);
+// HPC
+m=M(0x6f93b3);g=mk('Máy nén áp suất cao','Nén khí lên áp suất rất lớn (30–50 bar) trước khi đưa vào buồng đốt.',-.2,2,m,.14);
+cylX(g,.28,.28,1,m);for(let i=0;i<4;i++)blades(g,-.45+i*.3,.28,.7-i*.06,30,.1,m,.45);
+// Buồng đốt
+m=M(0xff6a1f,0xff4500);g=mk('Buồng đốt','Nhiên liệu được phun vào khí nén và đốt cháy, nhiệt độ lên tới hơn 1.500°C.',.8,3,m);
+cylX(g,.62,.62,.9,m);cylX(g,.4,.4,.9,M(0xffb347,0xff8c00));
+for(let i=0;i<12;i++){const a=i/12*Math.PI*2;add(g,new THREE.SphereGeometry(.05,8,8),M(0xffffff,0xffff99),0,Math.cos(a)*.62,Math.sin(a)*.62)}
+// HPT
+m=M(0xd4a24c,0x2a1500);g=mk('Tuabin cao áp','Khí nóng giãn nở làm quay tuabin, truyền năng lượng cho máy nén cao áp.',1.5,4,m,.14);
+cylX(g,.3,.3,.6,m);for(let i=0;i<2;i++)blades(g,-.15+i*.3,.3,.75,34,.11,m,.5);
+// LPT
+m=M(0xb78a3a,0x241000);g=mk('Tuabin áp suất thấp','Lấy nốt năng lượng còn lại để quay quạt phía trước thông qua trục chính.',2.25,5,m,.07);
+cylX(g,.3,.3,.9,m);for(let i=0;i<3;i++)blades(g,-.3+i*.3,.3,.9+i*.06,36,.12,m,.5);
+// Ống phụt
+m=M(0x7d8a95);g=mk('Ống phụt & chóp đuôi','Dẫn dòng khí nóng thoát ra phía sau với tốc độ cao, tạo lực đẩy.',3.2,6,m);
+cylX(g,.95,.7,.9,m);const tc=add(g,new THREE.ConeGeometry(.35,1.2,32),M(0x9aa6b0),.4);tc.rotation.z=-Math.PI/2;
+// Trục
+m=M(0xe0e6ea);g=mk('Trục chính (Shaft)','Trục đồng tâm nối tuabin với máy nén và quạt, truyền công suất giữa các tầng.',.4,3,m,.1);
+cylX(g,.09,.09,6.4,m,0,false);g.userData.dy=-2.6;g.userData.noX=1;
+// Nhãn
+const lbs=parts.map(p=>{const d=document.createElement('div');d.className='lb';d.textContent=p.userData.name;document.body.appendChild(d);return d});
+// State
+let ex=0,tex=0,tx=.15,ty=-.5,rx=.15,ry=-.5,cd=11,tcd=11,drag=false,hand=false,sel=null,hov=null,lx=0,ly=0,mv=0;
+function resize(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+const sl=document.getElementById('sl');
+sl.oninput=()=>{tex=+sl.value};
+document.getElementById('bx').onclick=()=>{tex=tex>.5?0:1;sl.value=tex};
+cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;mv=0;cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(drag&&!hand){const dx=e.clientX-lx,dy=e.clientY-ly;mv+=Math.abs(dx)+Math.abs(dy);ty+=dx*.008;tx=Math.max(-1.2,Math.min(1.2,tx+dy*.006));lx=e.clientX;ly=e.clientY}pick(e.clientX,e.clientY,false)});
+cv.addEventListener('pointerup',e=>{drag=false;if(mv<6)pick(e.clientX,e.clientY,true)});
+cv.addEventListener('wheel',e=>{e.preventDefault();tcd=Math.max(5,Math.min(18,tcd+e.deltaY*.01))},{passive:false});
+const ray=new THREE.Raycaster(),v2=new THREE.Vector2();
+function pick(x,y,click){v2.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFromCamera(v2,cam);
+const hit=ray.intersectObjects(parts,true).filter(h=>h.object.parent.userData.name!=='Vỏ động cơ (Nacelle)'||ex<.3||true)[0];
+let p=null;if(hit){let o=hit.object;while(o&&!o.userData.name)o=o.parent;p=o}
+hov=p;cv.style.cursor=p?'pointer':'default';
+if(click&&p){sel=p;document.getElementById('info').innerHTML='<b>'+p.userData.name+'</b><br><span>'+p.userData.desc+'</span>'}}
+// Camera & tay
+const st=document.getElementById('st'),vid=document.getElementById('vid');
+document.getElementById('bcam').onclick=async()=>{
+if(typeof Hands==='undefined'){st.textContent='● Không tải được MediaPipe – dùng chuột (hoặc mở file trên máy với mạng)';return}
+try{const stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480}});vid.srcObject=stream;await vid.play();vid.style.display='block';
+const hs=new Hands({locateFile:f=>'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/'+f});
+hs.setOptions({maxNumHands:2,modelComplexity:1,minDetectionConfidence:.6,minTrackingConfidence:.6});hs.onResults(onHands);
+st.textContent='● Đang tải mô hình tay…';
+const loop=async()=>{if(vid.readyState>=2)try{await hs.send({image:vid})}catch(e){st.textContent='● Lỗi nhận diện tay – dùng chuột';return}requestAnimationFrame(loop)};loop()
+}catch(e){st.textContent='● Không bật được camera – dùng chuột'}};
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+let lost=0;
+function onHands(r){const L=r.multiHandLandmarks||[];
+if(!L.length){if(++lost>20){hand=false;st.textContent='● Chưa thấy tay'}return}lost=0;hand=true;
+const h=L[0],palm=dist(h[0],h[9]);
+const open=([8,12,16,20].reduce((s,i)=>s+dist(h[0],h[i]),0)/4)/palm;
+tex=Math.max(0,Math.min(1,(open-1.35)/.75));sl.value=tex;
+ty=((1-h[9].x)-.5)*-5;tx=(h[9].y-.5)*1.8;
+if(L.length>1){const d=dist(L[0][9],L[1][9]);tcd=Math.max(5,Math.min(16,16-d*16))}
+st.textContent='● Tay: '+(tex>.7?'XÒE – tách':tex<.25?'NẮM – lắp':'đang chuyển')+(L.length>1?' | 2 tay: zoom':'')}
+// Vòng lặp
+const tv=new THREE.Vector3();
+function tick(){requestAnimationFrame(tick);
+ex+=(tex-ex)*.07;if(!drag&&!hand&&Math.abs(tex-ex)<.01)ty+=.0025;
+ry+=(ty-ry)*.1;rx+=(tx-rx)*.1;cd+=(tcd-cd)*.08;
+root.rotation.y=ry;root.rotation.x=rx*.5;
+cam.position.set(0,1.2,cd);cam.lookAt(0,-.2,0);
+const mid=3.5,sp=1.15;
+parts.forEach((p,i)=>{const u=p.userData;
+if(u.noX)p.position.x=u.base;else p.position.x=u.base+(u.order-mid)*sp*ex*(u.name.startsWith('Vỏ')?0:1);
+p.position.y=u.dy*ex+(u.name.startsWith('Vỏ')?2.8*ex:0);
+p.rotation.x+=u.spin*(1-ex*.7);
+const on=p===sel||p===hov;u.mat.emissive.setHex(on?0x00aacc:u.e0);
+tv.copy(p.position);tv.y+=1.5;tv.applyMatrix4(root.matrixWorld);tv.project(cam);
+const l=lbs[i];l.style.transform='translate('+((tv.x*.5+.5)*innerWidth-30)+'px,'+((-tv.y*.5+.5)*innerHeight)+'px)';l.style.opacity=ex>.3?1:0});
+pl.intensity=1.2+Math.sin(performance.now()*.003)*.3;
+R.render(S,cam)}
+tick();
+</script></body></html>
