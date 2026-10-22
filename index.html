@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>E-Watch – Mạng giám sát môi trường</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🛰️ E-Watch</h1>
+  <span id="netBadge" class="badge off">Chưa kết nối</span>
+</header>
+
+<main>
+  <section class="card" id="cam">
+    <div class="video-wrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="hud" class="hud">Camera chưa bật</div>
+    </div>
+    <div class="row">
+      <button id="btnStart" class="primary">▶ Bật giám sát</button>
+      <button id="btnStop" disabled>■ Dừng</button>
+      <select id="facing" title="Camera">
+        <option value="environment">Camera sau</option>
+        <option value="user">Camera trước</option>
+      </select>
+    </div>
+    <div class="stats">
+      <div><b id="sPerson">0</b><span>Người</span></div>
+      <div><b id="sAnimal">0</b><span>Động vật</span></div>
+      <div><b id="sPlant">0</b><span>Cây</span></div>
+      <div><b id="sVehicle">0</b><span>Phương tiện</span></div>
+      <div><b id="sChange">0%</b><span>Biến động</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🔗 Kết nối liên thông</h2>
+    <label>Tên thiết bị / vị trí
+      <input id="devName" maxlength="30" placeholder="VD: Camera sườn đồi A">
+    </label>
+    <div class="row">
+      <button id="btnCreate" class="primary">Tạo phòng</button>
+      <input id="joinCode" maxlength="6" placeholder="Mã phòng" autocapitalize="characters">
+      <button id="btnJoin">Vào phòng</button>
+    </div>
+    <p id="roomInfo" class="hint">Một máy tạo phòng, các máy khác nhập mã để vào. Mọi cảnh báo sẽ được chia sẻ cho cả phòng.</p>
+    <div class="hint">Thiết bị trong phòng: <b id="peerCount">0</b></div>
+  </section>
+
+  <section class="card">
+    <h2>⚙️ Cài đặt phân tích</h2>
+    <label class="chk"><input type="checkbox" id="terrain"> Chế độ giám sát địa hình (sạt lở / đổ / dịch chuyển)</label>
+    <label class="chk"><input type="checkbox" id="guard"> Chế độ canh gác (báo khi có người xuất hiện)</label>
+    <label class="chk"><input type="checkbox" id="fire" checked> Phát hiện nghi có lửa (theo màu)</label>
+    <label class="chk"><input type="checkbox" id="useGps"> Đính kèm vị trí GPS vào cảnh báo</label>
+    <label>Độ nhạy biến động: <b id="sensVal">5</b>
+      <input type="range" id="sens" min="1" max="10" value="5">
+    </label>
+    <label>Báo đông người từ: <b id="crowdVal">5</b> người
+      <input type="range" id="crowd" min="2" max="20" value="5">
+    </label>
+    <div class="row">
+      <button id="btnBase">📸 Chụp lại mốc địa hình</button>
+      <button id="btnTest">🔔 Thử cảnh báo</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🚨 Cảnh báo</h2>
+    <ul id="feed" class="feed"><li class="lv-info"><div>Chưa có cảnh báo nào.</div></li></ul>
+  </section>
+</main>
+
+<footer>
+  <p>⚠️ Đây là công cụ <b>hỗ trợ</b>, không thay thế hệ thống cảnh báo chính thức của cơ quan chức năng. AI có thể nhận diện sai. Mọi hình ảnh được xử lý ngay trên máy bạn, không tải lên máy chủ.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
