@@ -1,87 +1,81 @@
-<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
-<title>E-Watch – Mạng giám sát môi trường</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Mapping Máy Chiếu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<header>
-  <h1>🛰️ E-Watch</h1>
-  <span id="netBadge" class="badge off">Chưa kết nối</span>
-</header>
+</head><body>
 
-<main>
-  <section class="card" id="cam">
-    <div class="video-wrap">
-      <video id="video" playsinline muted></video>
-      <canvas id="overlay"></canvas>
-      <div id="hud" class="hud">Camera chưa bật</div>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<div id="nogl">Trình duyệt này không hỗ trợ WebGL nên không chạy được mapping. Hãy thử Chrome, Edge hoặc Firefox bản mới.</div>
+
+<aside id="panel" aria-label="Bảng điều khiển mapping">
+  <div class="phead">
+    <div class="brand"><b>Mapping</b><span id="resInfo"></span></div>
+    <div class="hbtns">
+      <button class="btn primary" id="btnHide" type="button">Ẩn bảng <kbd>H</kbd></button>
+      <button class="btn" id="btnFS" type="button">Toàn màn hình <kbd>F</kbd></button>
     </div>
-    <div class="row">
-      <button id="btnStart" class="primary">▶ Bật giám sát</button>
-      <button id="btnStop" disabled>■ Dừng</button>
-      <select id="facing" title="Camera">
-        <option value="environment">Camera sau</option>
-        <option value="user">Camera trước</option>
-      </select>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tabFrames" aria-selected="true" aria-controls="paneFrames" type="button">Khung</button>
+    <button role="tab" id="tabLib" aria-selected="false" aria-controls="paneLib" type="button">Mẫu video</button>
+  </div>
+  <div class="pbody">
+    <div class="pane" id="paneFrames" role="tabpanel" aria-labelledby="tabFrames">
+      <div class="slist" id="slist"></div>
+      <div class="two">
+        <button class="btn" id="btnAddBox" type="button">+ Hình hộp</button>
+        <button class="btn" id="btnAdd" type="button">+ Khung phẳng</button>
+        <button class="btn" id="btnDup" type="button">Nhân đôi</button>
+        <button class="btn danger" id="btnDel" type="button">Xoá</button>
+      </div>
+      <div class="empty" id="noSurf" hidden>Chưa có gì để chiếu. Bấm “+ Hình hộp” hoặc “+ Khung phẳng” để bắt đầu.</div>
+      <div class="props" id="props">
+        <div class="field"><label class="lab" for="pName">Tên khung</label><input type="text" id="pName" maxlength="40" autocomplete="off"></div>
+        <div class="field">
+          <span class="lab">Mẫu đang chạy</span>
+          <div class="srcrow"><b id="pSrc"></b><button class="btn" id="pChange" type="button">Đổi mẫu</button></div>
+        </div>
+        <div id="sliders" style="display:grid;gap:10px"></div>
+        <div class="two">
+          <label class="chk"><input type="checkbox" id="pFlipH">Lật ngang</label>
+          <label class="chk"><input type="checkbox" id="pFlipV">Lật dọc</label>
+        </div>
+        <div class="two">
+          <div class="field"><label class="lab" for="pFit">Cách phủ</label>
+            <select id="pFit"><option value="cover">Phủ kín</option><option value="contain">Vừa khung</option><option value="stretch">Kéo giãn</option></select></div>
+          <div class="field"><label class="lab" for="pAspect">Tỉ lệ khung</label>
+            <select id="pAspect"><option value="auto">Tự động</option><option value="1.7778">16:9</option><option value="1.3333">4:3</option><option value="1">1:1</option><option value="0.5625">9:16</option><option value="2.3333">21:9</option></select></div>
+        </div>
+        <div class="two">
+          <div class="field"><label class="lab" for="pRot">Xoay mẫu</label>
+            <select id="pRot"><option value="0">0°</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></div>
+          <div class="field" id="boxOnly"><span class="lab">Hình hộp</span>
+            <button class="btn" id="btnBoxSame" type="button">Cả 3 mặt giống nhau</button></div>
+        </div>
+        <div class="readout" id="pCorner"></div>
+        <button class="btn" id="btnReset" type="button">Đặt lại vị trí</button>
+      </div>
     </div>
-    <div class="stats">
-      <div><b id="sPerson">0</b><span>Người</span></div>
-      <div><b id="sAnimal">0</b><span>Động vật</span></div>
-      <div><b id="sPlant">0</b><span>Cây</span></div>
-      <div><b id="sVehicle">0</b><span>Phương tiện</span></div>
-      <div><b id="sChange">0%</b><span>Biến động</span></div>
+    <div class="pane" id="paneLib" role="tabpanel" aria-labelledby="tabLib" hidden>
+      <div class="lab">Mẫu có sẵn</div>
+      <div class="tiles" id="tilesP"></div>
+      <div class="lab">Video / ảnh của bạn</div>
+      <div class="tiles" id="tilesM">
+        <button class="tile add" id="btnUpload" type="button"><b>+ Tải lên</b><span>MP4, WebM, JPG, PNG</span></button>
+      </div>
+      <button class="btn" id="btnRestart" type="button">Phát lại từ đầu</button>
     </div>
-  </section>
+  </div>
+  <div class="hint">
+    <span><kbd>H</kbd> ẩn/hiện</span><span><kbd>B</kbd> tắt hình</span><span><kbd>1–7</kbd> chọn điểm</span><span><kbd>←↑→↓</kbd> nhích</span><span><kbd>Shift</kbd> nhích xa</span>
+  </div>
+</aside>
 
-  <section class="card">
-    <h2>🔗 Kết nối liên thông</h2>
-    <label>Tên thiết bị / vị trí
-      <input id="devName" maxlength="30" placeholder="VD: Camera sườn đồi A">
-    </label>
-    <div class="row">
-      <button id="btnCreate" class="primary">Tạo phòng</button>
-      <input id="joinCode" maxlength="6" placeholder="Mã phòng" autocapitalize="characters">
-      <button id="btnJoin">Vào phòng</button>
-    </div>
-    <p id="roomInfo" class="hint">Một máy tạo phòng, các máy khác nhập mã để vào. Mọi cảnh báo sẽ được chia sẻ cho cả phòng.</p>
-    <div class="hint">Thiết bị trong phòng: <b id="peerCount">0</b></div>
-  </section>
+<div id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file" accept="video/*,image/*" multiple hidden>
+<div id="mediaHost" aria-hidden="true"></div>
 
-  <section class="card">
-    <h2>⚙️ Cài đặt phân tích</h2>
-    <label class="chk"><input type="checkbox" id="terrain"> Chế độ giám sát địa hình (sạt lở / đổ / dịch chuyển)</label>
-    <label class="chk"><input type="checkbox" id="guard"> Chế độ canh gác (báo khi có người xuất hiện)</label>
-    <label class="chk"><input type="checkbox" id="fire" checked> Phát hiện nghi có lửa (theo màu)</label>
-    <label class="chk"><input type="checkbox" id="useGps"> Đính kèm vị trí GPS vào cảnh báo</label>
-    <label>Độ nhạy biến động: <b id="sensVal">5</b>
-      <input type="range" id="sens" min="1" max="10" value="5">
-    </label>
-    <label>Báo đông người từ: <b id="crowdVal">5</b> người
-      <input type="range" id="crowd" min="2" max="20" value="5">
-    </label>
-    <div class="row">
-      <button id="btnBase">📸 Chụp lại mốc địa hình</button>
-      <button id="btnTest">🔔 Thử cảnh báo</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>🚨 Cảnh báo</h2>
-    <ul id="feed" class="feed"><li class="lv-info"><div>Chưa có cảnh báo nào.</div></li></ul>
-  </section>
-</main>
-
-<footer>
-  <p>⚠️ Đây là công cụ <b>hỗ trợ</b>, không thay thế hệ thống cảnh báo chính thức của cơ quan chức năng. AI có thể nhận diện sai. Mọi hình ảnh được xử lý ngay trên máy bạn, không tải lên máy chủ.</p>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+<script src="script.js"></script>
+</body></html>
